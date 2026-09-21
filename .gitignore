@@ -1,0 +1,15 @@
+# dependências e builds
+node_modules/
+dist/
+.vite/
+
+# saídas de verificação (capturas, vídeo)
+frontend/e2e/out/
+
+# configuração local do Claude Code
+.claude/
+
+# segredos
+.env
+.env.*
+!.env.example

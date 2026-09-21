@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@import "./scene/scene.css";
+
+:root {
+  --lv-bg: #05080f;
+  --lv-ice: #eaf6ff;
+  --lv-cyan: #7fe3ff;
+  --lv-fire: #ff9a3c;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--lv-bg);
+  color: var(--lv-ice);
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}

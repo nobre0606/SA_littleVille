@@ -1,0 +1,307 @@
+/* Estilos das camadas da cena. Máscaras levam o prefixo -webkit- (Safari < 15.4 / iOS). */
+
+.lv-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  isolation: isolate; /* blends (screen/soft-light) só contra a imagem do stage */
+  contain: layout paint;
+  background: var(--lv-bg);
+}
+
+.lv-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lv-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Raios de luz ------------------------------------------------------------ */
+.lv-beam {
+  position: absolute;
+  transform-origin: 50% 0;
+  clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(127, 227, 255, 0) 0%,
+    rgba(127, 227, 255, 0.5) 14%,
+    rgba(90, 200, 240, 0.24) 58%,
+    rgba(90, 200, 240, 0) 100%
+  );
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32%, #000 68%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 32%, #000 68%, transparent);
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+}
+
+/* Portal ------------------------------------------------------------------ */
+.lv-portal {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(170, 244, 255, 0.8) 0%,
+    rgba(80, 200, 240, 0.38) 34%,
+    rgba(80, 200, 240, 0) 70%
+  );
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+}
+
+/* Pé grande --------------------------------------------------------------- */
+.lv-bigfoot {
+  position: absolute;
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 60%, transparent 100%);
+  will-change: transform;
+}
+.lv-bigfoot-copy {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+}
+.lv-bigfoot-warm {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: soft-light;
+  will-change: opacity;
+}
+
+/* Luz do fogo ------------------------------------------------------------- */
+.lv-firelight {
+  position: absolute;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 170, 80, 0.95) 0%,
+    rgba(255, 140, 50, 0.48) 30%,
+    rgba(255, 120, 40, 0.12) 60%,
+    rgba(255, 120, 40, 0) 72%
+  );
+  will-change: opacity, transform;
+}
+
+/* Gotas ------------------------------------------------------------------- */
+.lv-drop {
+  position: absolute;
+  width: calc(var(--s) * 3px);
+  height: calc(var(--s) * 11px);
+  margin-left: calc(var(--s) * -1.5px);
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: linear-gradient(to bottom, rgba(234, 246, 255, 0.95), rgba(127, 227, 255, 0.85));
+  box-shadow: 0 0 calc(var(--s) * 6px) rgba(127, 227, 255, 0.7);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Névoa rasteira ---------------------------------------------------------- */
+.lv-fog-v {
+  position: absolute;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 66%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 38%, #000 66%, transparent);
+}
+.lv-fog-h {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+  mix-blend-mode: screen;
+}
+.lv-fog-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 300%;
+  height: 100%;
+  background-repeat: repeat-x;
+  background-size: 33.3334% 100%;
+  will-change: transform;
+}
+
+/* Vinheta ----------------------------------------------------------------- */
+.lv-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 80% at 35% 55%, transparent 55%, rgba(5, 8, 15, 0.55) 100%),
+    linear-gradient(to right, transparent 55%, rgba(5, 8, 15, 0.85) 100%);
+}
+@media (orientation: portrait) {
+  .lv-vignette {
+    background:
+      radial-gradient(ellipse 100% 90% at 40% 55%, transparent 55%, rgba(5, 8, 15, 0.5) 100%),
+      linear-gradient(to bottom, transparent 70%, #05080f 100%);
+  }
+}
+
+/* Debug ------------------------------------------------------------------- */
+.lv-dbg-pt {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.lv-dbg-pt::before,
+.lv-dbg-pt::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.lv-dbg-pt::before {
+  left: -8px;
+  top: 0;
+  width: 16px;
+  height: 1px;
+}
+.lv-dbg-pt::after {
+  left: 0;
+  top: -8px;
+  width: 1px;
+  height: 16px;
+}
+.lv-dbg-pt > span {
+  position: absolute;
+  left: 10px;
+  top: 4px;
+  font: 600 10px/1 ui-monospace, Consolas, monospace;
+  white-space: nowrap;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+.lv-dbg-box {
+  position: absolute;
+  border: 1px dashed currentColor;
+  pointer-events: none;
+}
+.lv-dbg-box > span {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  font: 600 10px/1 ui-monospace, Consolas, monospace;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+.lv-hud {
+  position: fixed;
+  z-index: 50;
+  left: max(8px, env(safe-area-inset-left));
+  top: max(8px, env(safe-area-inset-top));
+  width: min(268px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 6px 8px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #7fe3ff;
+  font: 600 11px/1.45 ui-monospace, Consolas, monospace;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
+}
+/* Em retrato a cena ocupa o topo (58svh): o HUD vai para baixo para não cobri-la. */
+@media (orientation: portrait) {
+  .lv-hud {
+    top: auto;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: calc(100vw - 16px);
+    max-height: calc(42dvh - 8px);
+  }
+}
+.lv-hud pre {
+  margin: 0;
+  font: inherit;
+  white-space: pre;
+}
+.lv-hud button {
+  font: inherit;
+  color: inherit;
+  background: rgba(127, 227, 255, 0.12);
+  border: 1px solid rgba(127, 227, 255, 0.4);
+  border-radius: 5px;
+  padding: 5px 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.lv-hud button[aria-pressed="true"] {
+  background: #7fe3ff;
+  color: #05080f;
+}
+.lv-hud .row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.lv-hud h4 {
+  margin: 8px 0 2px;
+  font: inherit;
+  color: #ff9a3c;
+}
+.lv-hud label.layer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  cursor: pointer;
+}
+.lv-hud label.layer input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #7fe3ff;
+}
+.lv-hud label.layer .ms {
+  margin-left: auto;
+  color: #ff9a3c;
+}
+.lv-hud label.layer.sub {
+  padding-left: 14px;
+}
+.lv-hud input[type="range"] {
+  width: 100%;
+  accent-color: #ff9a3c;
+}
+
+/* Toggle de camadas do HUD de debug: o motor escreve `data-off` na raiz. */
+:root[data-off~="background"] [data-layer="background"] {
+  display: none !important;
+}
+:root[data-off~="rays"] [data-layer="rays"] {
+  display: none !important;
+}
+:root[data-off~="portal"] [data-layer="portal"] {
+  display: none !important;
+}
+:root[data-off~="glitter"] [data-layer="glitter"] {
+  display: none !important;
+}
+:root[data-off~="bigfoot"] [data-layer="bigfoot"] {
+  display: none !important;
+}
+:root[data-off~="campfire"] [data-layer="campfire"] {
+  display: none !important;
+}
+:root[data-off~="firelight"] [data-layer="firelight"] {
+  display: none !important;
+}
+:root[data-off~="drips"] [data-layer="drips"] {
+  display: none !important;
+}
+:root[data-off~="fog"] [data-layer="fog"] {
+  display: none !important;
+}
+:root[data-off~="vignette"] [data-layer="vignette"] {
+  display: none !important;
+}
+:root[data-off~="snow"] [data-layer="snow"] {
+  display: none !important;
+}
