@@ -27,6 +27,8 @@ const FPS_WINDOW = 0.5 // s por amostra
 const FPS_SAMPLES = 4 // média móvel de ~2 s
 const BREATH_DEFAULT = { scaleY: 1.006, cycle: 4 }
 export const SNOW_CALM = 0.2 // intensidade do estado calmo (~300 de 1500 partículas)
+/** sessionStorage: só um flag "já vi a intro nesta aba", nunca dados sensíveis (regra da Fase 3). */
+export const INTRO_SEEN_KEY = 'lv-intro-seen'
 
 /**
  * Parâmetros de URL (todos opcionais):
@@ -80,6 +82,7 @@ export function createEngine({
   const subs = new Set() // { fn, name }
   const off = new Set(initialOff)
   const breathListeners = new Set()
+  const introListeners = new Set()
   const governor = createQualityGovernor({ level: forcedQuality ?? QUALITY.HIGH })
 
   // monitor de FPS
@@ -110,7 +113,11 @@ export function createEngine({
     snow: { intensity: initialSnow, active: 0, storm: 0 },
     /** Respiração do pé grande (scaleY do pico, ciclo completo em s). Calibrável no HUD. */
     breath: { ...initialBreath },
-    reduced: false,
+    // Lido já na criação (síncrono), não só em start(): start() roda num useEffect, ou seja,
+    // DEPOIS da primeira renderização de quem consome `engine.reduced` (ex.: IntroOverlay
+    // decide playCinematic/playSimpleFade já na primeira renderização). Se ficasse `false`
+    // até start() rodar, prefers-reduced-motion seria ignorado na decisão inicial da intro.
+    reduced: typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false,
     quality: forcedQuality ?? QUALITY.HIGH,
     qualityMode: forcedQuality === null ? 'auto' : 'manual',
     /** Geometria atual do stage em px (escrita pelo SceneStage). */
@@ -187,6 +194,24 @@ export function createEngine({
     onBreath(fn) {
       breathListeners.add(fn)
       return () => breathListeners.delete(fn)
+    },
+
+    /**
+     * Botão "Repetir intro" do HUD (?debug=1): limpa o flag de sessão e avisa quem estiver
+     * escutando (IntroOverlay) para remontar e tocar a timeline de novo, sem recarregar a
+     * página. Não existe fora do debug — em produção a intro só roda mesmo na primeira visita.
+     */
+    replayIntro() {
+      try {
+        sessionStorage.removeItem(INTRO_SEEN_KEY)
+      } catch {
+        /* sessionStorage indisponível (modo privado etc.): a intro simplesmente não persiste */
+      }
+      for (const fn of introListeners) fn()
+    },
+    onIntroReplay(fn) {
+      introListeners.add(fn)
+      return () => introListeners.delete(fn)
     },
   }
 
@@ -286,6 +311,7 @@ export function createEngine({
     mq.addEventListener('change', onMotionPref)
     document.addEventListener('visibilitychange', onVisibility)
     applyOff()
+    if (debug) document.documentElement.dataset.debug = '1'
     gsap.ticker.add(tick)
     if (document.hidden) gsap.ticker.sleep()
   }
@@ -298,6 +324,7 @@ export function createEngine({
     mq?.removeEventListener('change', onMotionPref)
     mq = null
     delete document.documentElement.dataset.off
+    delete document.documentElement.dataset.debug
   }
 
   return engine

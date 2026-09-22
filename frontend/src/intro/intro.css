@@ -1,0 +1,107 @@
+.lv-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.lv-intro-dark {
+  position: absolute;
+  inset: 0;
+  background: #05080f;
+}
+
+.lv-intro-mist {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  background: radial-gradient(ellipse 70% 60% at 50% 55%, rgba(191, 239, 255, 0.9), rgba(127, 227, 255, 0.35) 55%, rgba(5, 8, 15, 0) 85%);
+}
+
+.lv-intro-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 22px);
+  pointer-events: none;
+}
+
+.lv-intro-logo-wrap {
+  position: relative;
+  width: min(46vw, 360px);
+}
+
+.lv-intro-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 24px rgba(127, 227, 255, 0.55)) drop-shadow(0 0 60px rgba(127, 227, 255, 0.25));
+}
+
+.lv-intro-sweep {
+  /* O elemento NUNCA se move (o mask-image precisa ficar alinhado com a logo o tempo todo —
+     transladar o elemento moveria a máscara junto, "abrindo a janela" da silhueta em outro
+     lugar da tela). Quem varre é o gradiente DENTRO dele, via background-position. */
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(100deg, transparent 42%, rgba(255, 255, 255, 0.95) 50%, transparent 58%);
+  background-size: 300% 100%;
+  background-position: 200% 0;
+  mix-blend-mode: screen;
+  -webkit-mask-image: url("/assets/generated/logo.svg");
+  mask-image: url("/assets/generated/logo.svg");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.lv-intro-title {
+  font: 600 clamp(18px, 3.2vw, 30px) / 1 system-ui, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.5em;
+  color: #eaf6ff;
+  text-shadow: 0 0 18px rgba(127, 227, 255, 0.6);
+  text-indent: 0.5em; /* compensa o letter-spacing sobrando à direita, centraliza de verdade */
+}
+
+.lv-intro-dissolve {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lv-intro-skip {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 227, 255, 0.35);
+  background: rgba(5, 8, 15, 0.45);
+  color: #eaf6ff;
+  font: 500 13px/1 system-ui, "Segoe UI", Roboto, sans-serif;
+  opacity: 0.7;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lv-intro-skip:hover,
+.lv-intro-skip:focus-visible {
+  opacity: 1;
+}
+
+.lv-card-slot {
+  position: absolute;
+  right: 6%;
+  top: 50%;
+  width: min(380px, 30vw);
+  height: 58%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+:root[data-debug="1"] .lv-card-slot {
+  border: 1px dashed #ff7ce0;
+}

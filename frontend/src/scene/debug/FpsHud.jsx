@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LAYER_DEFS, QUALITY_NAMES } from '../engine/createEngine.js'
 import { useEngine } from '../engine/SceneProvider.jsx'
 import { runIntroBenchmark, STORM_TIERS } from '../engine/introBenchmark.js'
+import { SNOW_CALM } from '../engine/createEngine.js'
 
 const MODES = [
   ['auto', 'auto'],
@@ -9,6 +10,10 @@ const MODES = [
   [1, 'média'],
   [0, 'baixa'],
 ]
+
+/** Mesmo valor usado no A/B do lineCap: sustenta storm=1.00 de forma confiável (ao contrário
+ * do checkbox "tempestade ×1.5", que com o vento variando pode ficar longe de 1.00). */
+const SUSTAINED_STORM_WIND = 4
 
 /**
  * HUD de diagnóstico (?debug=1). O texto e os ms por camada são atualizados direto no DOM
@@ -86,7 +91,24 @@ export default function FpsHud() {
   const runBenchmark = async () => {
     setBench('medindo…')
     const r = await runIntroBenchmark(engine)
-    setBench(`${r.tier} (${r.avgFrameMs.toFixed(1)} ms/frame, ${r.frames} frames) → ${STORM_TIERS[r.tier].cap} flocos`)
+    setBench(
+      `${r.tier} — ${r.hz.toFixed(0)}Hz detectado, ${(r.dropRatio * 100).toFixed(1)}% de frames perdidos ` +
+        `(${r.dropped}/${r.frames}) → ${STORM_TIERS[r.tier].cap} flocos`,
+    )
+    setSnowUi(engine.snow.intensity)
+    setStormWind(engine.wind.intensity > 1)
+  }
+  const presetCalmo = () => {
+    engine.setSnow({ intensity: SNOW_CALM })
+    engine.setWindIntensity(1)
+    setSnowUi(SNOW_CALM)
+    setStormWind(false)
+  }
+  const presetTempestade = () => {
+    engine.setSnow({ intensity: 1 })
+    engine.setWindIntensity(SUSTAINED_STORM_WIND)
+    setSnowUi(1)
+    setStormWind(true)
   }
   const changeBreath = (patch) => {
     engine.setBreath(patch)
@@ -123,7 +145,7 @@ export default function FpsHud() {
             </label>
           ))}
 
-          <h4>Benchmark da intro (Fase 3, ainda não ligado)</h4>
+          <h4>Benchmark da intro</h4>
           <button type="button" onClick={runBenchmark} style={{ width: '100%' }}>
             rodar benchmark (0,4 s)
           </button>
@@ -134,6 +156,14 @@ export default function FpsHud() {
           )}
 
           <h4>Nevasca</h4>
+          <div className="row">
+            <button type="button" onClick={presetCalmo}>
+              Calmo
+            </button>
+            <button type="button" onClick={presetTempestade}>
+              Tempestade (sustentada)
+            </button>
+          </div>
           <label style={{ display: 'block' }}>
             intensidade {snow.toFixed(2)} (~{Math.round(snow * 1500)} flocos)
             <input type="range" min="0" max="1" step="0.01" value={snow} onChange={(ev) => changeSnow(Number(ev.target.value))} />
@@ -142,6 +172,11 @@ export default function FpsHud() {
             <input type="checkbox" checked={stormWind} onChange={(ev) => changeStorm(ev.target.checked)} />
             <span>tempestade (vento ×1.5)</span>
           </label>
+
+          <h4>Intro</h4>
+          <button type="button" onClick={() => engine.replayIntro()} style={{ width: '100%' }}>
+            Repetir intro
+          </button>
 
           <h4>Respiração do pé grande</h4>
           <label style={{ display: 'block' }}>
