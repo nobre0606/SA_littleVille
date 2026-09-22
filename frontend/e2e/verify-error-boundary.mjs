@@ -56,7 +56,12 @@ for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
     const consoleErrors = []
     page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()))
     await page.goto(`${BASE}/?debug=1&seed=7&crash=tick`)
-    await page.waitForFunction(() => window.__scene && window.__scene.stage.w > 0)
+    // Não espera por stage.w > 0 aqui: ?crash=tick derruba o motor quase no primeiro tick,
+    // possivelmente antes do ResizeObserver do SceneStage medir a cena pela 1ª vez — nesse
+    // caso stage.w nunca passa de 0 (SceneStage é desmontado pelo boundary antes de medir),
+    // o que é o comportamento CORRETO, não um bug: só window.__scene (setado no mount do
+    // SceneProvider, fora do boundary) é garantido aqui.
+    await page.waitForFunction(() => !!window.__scene)
     await page.waitForSelector('[data-testid="scene-fallback"]', { timeout: 5000 })
     const fallback = await page.locator('[data-testid="scene-fallback"]').count()
     const slot = await page.locator('[data-testid="auth-card-slot"]').count()

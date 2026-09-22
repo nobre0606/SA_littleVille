@@ -32,3 +32,25 @@ export function computeCover(vw, vh, focus = SCENE.focus, padPx = 24) {
 
   return { w, h, x: Math.round(x), y: Math.round(y), scale }
 }
+
+/**
+ * Mapeia `uiRegion` (% da IMAGEM, sceneMap.js) para px da VIEWPORT, usando a MESMA geometria
+ * de `stage` (retornada por computeCover) — a região acompanha o recorte/deslocamento real da
+ * arte em vez de um `right: X%` fixo que ignoraria pra onde o cover empurrou a imagem.
+ *
+ * Duas salvaguardas: o resultado nunca sai de [0, vw] (clampado), e se o mapeamento colapsar
+ * (crop extremo deixando menos que `minWidthFrac` da viewport de largura), cai pra uma faixa
+ * mínima ancorada na borda direita — a arte sempre deixa esse lado livre, então é um fallback
+ * seguro em vez de um card espremido ou fora da tela.
+ */
+export function computeUiRegionPx(stage, vw, uiRegion, minWidthFrac = 0.32) {
+  const clamp = (v) => Math.max(0, Math.min(vw, v))
+  let left = clamp(stage.x + (uiRegion.xMin / 100) * stage.w)
+  let right = clamp(stage.x + (uiRegion.xMax / 100) * stage.w)
+  const minWidth = vw * minWidthFrac
+  if (right - left < minWidth) {
+    right = vw
+    left = Math.max(0, vw - minWidth)
+  }
+  return { left, width: right - left }
+}

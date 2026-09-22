@@ -1,4 +1,4 @@
-import { SCENE } from '../sceneMap.js'
+import { SCENE, UI_REGION } from '../sceneMap.js'
 
 const CYAN = '#7FE3FF'
 const FIRE = '#FF9A3C'
@@ -22,7 +22,7 @@ const Box = ({ b, label, color, style }) => (
 
 /** ?debug=1: marcadores em % da imagem para calibrar o mapa da cena. */
 export default function DebugMarkers() {
-  const { fire, bigfoot, ceilingLight, portal, stalactiteTips, formArea, focus } = SCENE
+  const { fire, bigfoot, ceilingLight, portal, stalactiteTips, focus } = SCENE
   const d = fire.lightRadius.r * 2
   return (
     <div className="lv-layer" data-layer="debug" style={{ zIndex: 40 }} aria-hidden="true">
@@ -49,7 +49,7 @@ export default function DebugMarkers() {
         <Pt key={i} p={p} label={`t${i}`} color="#EAF6FF" />
       ))}
       <Box b={focus} label="foco (nunca cortar)" color={GREEN} />
-      <Box b={{ x0: formArea.xMin, y0: 0, x1: 100, y1: 100 }} label={`form x>${formArea.xMin}%`} color={PINK} />
+      <Box b={{ x0: UI_REGION.xMin, y0: 0, x1: UI_REGION.xMax, y1: 100 }} label={`uiRegion ${UI_REGION.xMin}-${UI_REGION.xMax}%`} color={PINK} />
     </div>
   )
 }

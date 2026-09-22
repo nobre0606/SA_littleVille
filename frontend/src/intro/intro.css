@@ -93,15 +93,41 @@
   opacity: 1;
 }
 
+/* Desktop: left/width vêm de JS (computeUiRegionPx, mesma geometria do cover da cena) — os
+   valores aqui são só o estado inicial, antes do primeiro cálculo. Retrato: metade inferior
+   (50svh — não é exatamente "metade" por acaso: um card de login/cadastro raso já preenche
+   quase isso, e 58/42 deixava o formulário cortado em telas de 844px de altura ou menos),
+   largura cheia, sobre um degradê escuro. */
 .lv-card-slot {
   position: absolute;
-  right: 6%;
-  top: 50%;
-  width: min(380px, 30vw);
-  height: 58%;
-  transform: translateY(-50%);
+  left: 63%;
+  top: 0;
+  bottom: 0;
+  width: 37%;
+  /* Precisa ficar ACIMA da cena (z-index:auto) mas ABAIXO da intro (.lv-intro, z-index:60) —
+     explícito porque, na árvore do React, o slot é irmão do error boundary e vem ANTES dele
+     no JSX (por causa de uma corrida de ref com a intro, ver SceneScreen.jsx), então não dá
+     pra confiar só na ordem do DOM pra empilhar por cima da cena. */
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
   pointer-events: none;
 }
 :root[data-debug="1"] .lv-card-slot {
-  border: 1px dashed #ff7ce0;
+  outline: 1px dashed #ff7ce0;
+  outline-offset: -1px;
+}
+
+@media (orientation: portrait) {
+  .lv-card-slot {
+    left: 0 !important;
+    width: 100% !important;
+    top: 50svh;
+    bottom: 0;
+    align-items: flex-end;
+    padding: 16px 16px max(20px, env(safe-area-inset-bottom));
+    background: linear-gradient(to bottom, transparent, rgba(5, 8, 15, 0.78) 22%, #05080f 60%);
+  }
 }

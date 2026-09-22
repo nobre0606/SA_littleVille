@@ -16,6 +16,7 @@ import Vignette from '../scene/layers/Vignette.jsx'
 import DebugMarkers from '../scene/debug/DebugMarkers.jsx'
 import FpsHud from '../scene/debug/FpsHud.jsx'
 import IntroOverlay from '../intro/IntroOverlay.jsx'
+import AuthCardSlot from '../intro/AuthCardSlot.jsx'
 
 /**
  * Gatilho de teste do error boundary: `?crash=1` (ou qualquer valor exceto `tick`) derruba a
@@ -71,15 +72,26 @@ function SceneContent({ backgroundVideo }) {
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-[#05080F]">
+      {/* Card de autenticação (Fase 4). Renderizado ANTES do error boundary de propósito, por
+          dois motivos: (1) fora dele, sobrevive a uma queda da cena; (2) a ref do slot precisa
+          estar anexada ANTES do useGSAP da intro (dentro do boundary) rodar, senão a timeline
+          monta com `els.cardSlot` undefined e o card nunca fica com opacity:0 — apareceu
+          inteiro, sem animação nenhuma, durante a tela escura/tempestade (bug real, achado
+          numa revisão). z-index (intro.css) garante que ele ainda fica visualmente ACIMA da
+          cena e ABAIXO da intro, então a ordem no DOM não depende de stacking por posição. A
+          intro anima esta posição (entrada pela direita, 7.0–8.0s); aparece pronto quando
+          pulada ou em reduced-motion (a timeline só toca essas camadas se `playCinematic`,
+          ver IntroOverlay.jsx). */}
+      <AuthCardSlot engine={engine} slotRef={cardSlotRef} />
+
       {/* Se qualquer camada (ou a intro) lançar um erro, isto vira um degradê estático — sem
-          canvas, GSAP ou timers, nada que possa lançar de novo. O slot do card (abaixo) fica
-          DE FORA deste boundary de propósito: uma queda aqui nunca o leva junto. */}
+          canvas, GSAP ou timers, nada que possa lançar de novo. */}
       <SceneErrorBoundary>
         <CrashProbe />
         <TickCrashProbe />
         <EngineCrashRelay engine={engine} />
         {/* Desktop: a cena ocupa tudo. Retrato: ocupa o topo; o card (Fase 4) fica embaixo. */}
-        <div ref={sceneRef} className="absolute inset-x-0 top-0 h-full portrait:h-[58svh]" aria-hidden="true">
+        <div ref={sceneRef} className="absolute inset-x-0 top-0 h-full portrait:h-[50svh]" aria-hidden="true">
           <SceneStage>
             {/* de trás para frente: camadas 1–9 dentro do stage; a nevasca (10) e a vinheta (11) por cima */}
             <Background backgroundVideo={backgroundVideo} />
@@ -100,12 +112,6 @@ function SceneContent({ backgroundVideo }) {
         {debug && <FpsHud />}
         <IntroOverlay key={introToken} engine={engine} sceneRef={sceneRef} cardSlotRef={cardSlotRef} forceReplay={introToken > 0} />
       </SceneErrorBoundary>
-
-      {/* Slot reservado para o card de autenticação (Fase 4 — ainda não existe). A intro já
-          anima esta posição (entrada pela direita, 7.0–8.0s); fica vazio até a Fase 4 montar
-          o card de verdade aqui. Borda só aparece em ?debug=1 (ver intro.css). Fora do
-          boundary acima: continua funcionando mesmo se a cena inteira cair. */}
-      <div ref={cardSlotRef} className="lv-card-slot" data-testid="auth-card-slot" />
     </main>
   )
 }

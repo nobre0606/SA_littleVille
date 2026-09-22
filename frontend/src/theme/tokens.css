@@ -1,0 +1,61 @@
+/**
+ * Tokens do tema do card de autenticação (Fase 4): TODA cor, raio, blur e sombra do card vem
+ * daqui — nenhum componente usa um hex/rgba fixo. Trocar de arte (Fase 4: caverna → cartoon
+ * pastel) é trocar só este bloco por um novo conjunto de valores; os componentes não mudam.
+ *
+ * Tema ativo: "caverna" (o único por enquanto). Quando a arte pastel chegar, o padrão vira
+ * `:root[data-ui-theme="pastel"] { ... }` do mesmo jeito que `[data-ui-theme="caverna"]`
+ * abaixo — os dois blocos coexistem, e o motor decide qual aplicar (ver ACTIVE_ART em
+ * sceneMap.js, que hoje só tem a variante "caverna").
+ */
+
+:root,
+:root[data-ui-theme="caverna"] {
+  /* Card "gelo fosco": fundo translúcido + blur, borda ciano baixa opacidade. A opacidade do
+     fundo é mais alta que um glassmorphism comum de propósito — precisa garantir contraste AA
+     do texto mesmo com um trecho claro da nevasca ou o brilho da fogueira atrás do card. */
+  --card-bg: rgba(8, 13, 24, 0.66);
+  --card-border-color: rgba(127, 227, 255, 0.3);
+  --card-border-width: 1px;
+  --card-radius: 16px;
+  --card-blur: 14px;
+  --card-shadow: 0 24px 70px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+
+  /* Texto */
+  --text-primary: #eaf6ff;
+  --text-secondary: rgba(234, 246, 255, 0.74);
+  --text-placeholder: rgba(234, 246, 255, 0.42);
+  --text-on-accent: #05080f; /* texto sobre o botão laranja (claro demais pro branco) */
+
+  /* Destaque: ciano nos focos/links, laranja só no botão principal (conecta com a fogueira) */
+  --accent-cyan: #7fe3ff;
+  --accent-cyan-soft: rgba(127, 227, 255, 0.14);
+  --accent-cyan-border: rgba(127, 227, 255, 0.4);
+  --accent-orange: #ff9a3c;
+  --accent-orange-hover: #ffad61;
+  --accent-orange-active: #f08628;
+
+  --danger: #ff8a8a;
+  --danger-soft: rgba(255, 108, 108, 0.14);
+  --success: #86f0b6;
+  --success-soft: rgba(103, 230, 160, 0.14);
+
+  /* Campos */
+  --input-bg: rgba(5, 8, 15, 0.5);
+  --input-border: rgba(127, 227, 255, 0.24);
+  --input-border-hover: rgba(127, 227, 255, 0.4);
+  --input-border-focus: var(--accent-cyan);
+  --input-border-danger: var(--danger);
+  --input-radius: 10px;
+  --input-shadow-focus: 0 0 0 3px rgba(127, 227, 255, 0.28);
+  --input-shadow-danger: 0 0 0 3px rgba(255, 138, 138, 0.22);
+
+  /* Botões */
+  --button-radius: 10px;
+  --button-shadow-focus: 0 0 0 3px rgba(127, 227, 255, 0.45);
+
+  /* Abas (Entrar / Criar conta) */
+  --tab-bg: rgba(5, 8, 15, 0.35);
+  --tab-active-bg: rgba(127, 227, 255, 0.14);
+  --tab-indicator: var(--accent-cyan);
+}

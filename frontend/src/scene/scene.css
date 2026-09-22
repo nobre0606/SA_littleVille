@@ -207,13 +207,13 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-overflow-scrolling: touch;
 }
-/* Em retrato a cena ocupa o topo (58svh): o HUD vai para baixo para não cobri-la. */
+/* Em retrato a cena ocupa o topo (50svh): o HUD vai para baixo para não cobri-la. */
 @media (orientation: portrait) {
   .lv-hud {
     top: auto;
     bottom: max(8px, env(safe-area-inset-bottom));
     width: calc(100vw - 16px);
-    max-height: calc(42dvh - 8px);
+    max-height: calc(50dvh - 8px);
   }
 }
 .lv-hud pre {

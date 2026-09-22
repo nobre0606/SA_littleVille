@@ -138,6 +138,15 @@ export function createSnowSim(rand) {
       const fr = (e.stage.w * SCENE.fire.snowWarmRadius.r) / 100 * pxScale
       const fr2 = fr * fr
 
+      // Retângulo do card (Fase 4), em px do canvas: a neve passa atrás dele, mas com
+      // densidade bem reduzida ali (legibilidade) em vez de um buraco sem neve nenhuma.
+      const cr = e.cardRect
+      const cardOn = cr && cr.width > 0
+      const cardL = cardOn ? cr.left * pxScale : 0
+      const cardT = cardOn ? cr.top * pxScale : 0
+      const cardR = cardOn ? (cr.left + cr.width) * pxScale : 0
+      const cardB = cardOn ? (cr.top + cr.height) * pxScale : 0
+
       // Profiling por fase (só com ?debug=1): mede onde o tempo realmente vai, em vez de
       // otimizar por suspeita. Ver e2e/profile-snow.mjs para a leitura desses números.
       const prof = e.debug ? { clear: 0, update: 0, round: 0, front: 0, batch: 0, total: 0 } : null
@@ -201,6 +210,9 @@ export function createSnowSim(rand) {
           const spr = sprites[L.soft]
           for (let j = 0; j < cnt; j++) {
             const i = L.start + j
+            // Densidade reduzida sobre o card: mantém só 1 a cada 4 flocos ali (75% a menos),
+            // por índice (não por sorteio a cada frame) — não pisca ao entrar/sair da área.
+            if (cardOn && i % 4 !== 0 && x[i] > cardL && x[i] < cardR && y[i] > cardT && y[i] < cardB) continue
             const r = sz[i] * k
             const a = pa[i] * Math.min(1, age[i] * 2)
             if (col[i] === 2) {

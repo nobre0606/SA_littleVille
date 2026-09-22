@@ -1,0 +1,16 @@
+{
+  "name": "shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schemas": "./src/schemas.js",
+    "./cpf": "./src/cpf.js"
+  },
+  "scripts": {
+    "test": "node --test \"src/**/*.test.js\""
+  },
+  "dependencies": {
+    "zod": "^4.1.13"
+  }
+}

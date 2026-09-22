@@ -1,6 +1,8 @@
 @import "tailwindcss";
+@import "./theme/tokens.css";
 @import "./scene/scene.css";
 @import "./intro/intro.css";
+@import "./auth/auth.css";
 
 :root {
   --lv-bg: #05080f;

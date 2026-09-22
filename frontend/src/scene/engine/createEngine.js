@@ -124,6 +124,9 @@ export function createEngine({
     qualityMode: forcedQuality === null ? 'auto' : 'manual',
     /** Geometria atual do stage em px (escrita pelo SceneStage). */
     stage: { w: 0, h: 0, scale: 1, x: 0, y: 0 },
+    /** Retângulo do card de autenticação em px da viewport (escrito por AuthCardSlot; largura
+     * 0 = card ainda não mediu/não existe). A nevasca lê isto pra reduzir densidade ali (Fase 4). */
+    cardRect: { left: 0, top: 0, width: 0, height: 0 },
     fps: { avg: 60, min: 60, ms: 16.7 },
     /** Diagnóstico (só com debug): custo de JS por camada e do tick inteiro, em ms (média móvel). */
     layerMs: {},

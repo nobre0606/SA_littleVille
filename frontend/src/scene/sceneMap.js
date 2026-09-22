@@ -43,9 +43,28 @@ export const SCENE = {
     pt(50.8, 42, 'measured'),
     pt(55, 51, 'measured'),
   ],
-  // Área do formulário: o escuro começa em ~63% e é total a partir de ~70%.
-  formArea: { xMin: 62, src: 'brief', note: 'confirmado; card fica em x 66–98%' },
   // Caixa que o enquadramento "cover" nunca pode cortar (pé grande + fogueira).
   focus: box(9, 55, 25, 81, 'measured', 'pé grande + fogueira; comanda o deslocamento do cover'),
   floor: { yMin: 80, yMax: 92, src: 'measured', note: 'faixa do chão para névoa rasteira e queda das gotas' },
 }
+
+/**
+ * Região da UI (card de autenticação), em % da IMAGEM — mesmo sistema de coordenadas do resto
+ * do sceneMap, não da viewport. Uma entrada por arte de fundo: trocar de arte (Fase 4:
+ * caverna -> cartoon pastel) é só trocar `ACTIVE_ART` e adicionar a variante aqui, sem mexer
+ * em CSS nem em componente nenhum — `computeUiRegionPx` (stageMath.js) converte pra px da
+ * viewport na hora, com a mesma geometria de `cover` do resto da cena.
+ */
+export const ART_VARIANTS = {
+  caverna: {
+    uiRegion: { xMin: 63, xMax: 100, src: 'brief', note: 'confirmado; escuro total a partir de ~70%, card cabe em x 66–98%' },
+  },
+  // Próxima arte (cartoon pastel, metade direita livre) — ainda não é a ativa; a arte chega
+  // depois e só troca ACTIVE_ART pra 'pastel' quando estiver pronta.
+  pastel: {
+    uiRegion: { xMin: 50, xMax: 100, src: 'brief', note: 'brief da arte nova: metade direita livre para a UI' },
+  },
+}
+
+export const ACTIVE_ART = 'caverna'
+export const UI_REGION = ART_VARIANTS[ACTIVE_ART].uiRegion
