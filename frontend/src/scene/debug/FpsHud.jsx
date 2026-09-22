@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { LAYER_DEFS, QUALITY_NAMES } from '../engine/createEngine.js'
 import { useEngine } from '../engine/SceneProvider.jsx'
+import { runIntroBenchmark, STORM_TIERS } from '../engine/introBenchmark.js'
 
 const MODES = [
   ['auto', 'auto'],
@@ -31,6 +32,7 @@ export default function FpsHud() {
   const [breath, setBreath] = useState({ ...engine.breath })
   const [snow, setSnowUi] = useState(engine.snow.intensity)
   const [stormWind, setStormWind] = useState(engine.wind.intensity > 1)
+  const [bench, setBench] = useState(null) // resultado do benchmark da intro (Fase 3, ainda não ligado)
 
   useEffect(() => {
     const el = textRef.current
@@ -81,6 +83,11 @@ export default function FpsHud() {
     engine.setWindIntensity(on ? 1.5 : 1)
     setStormWind(on)
   }
+  const runBenchmark = async () => {
+    setBench('medindo…')
+    const r = await runIntroBenchmark(engine)
+    setBench(`${r.tier} (${r.avgFrameMs.toFixed(1)} ms/frame, ${r.frames} frames) → ${STORM_TIERS[r.tier].cap} flocos`)
+  }
   const changeBreath = (patch) => {
     engine.setBreath(patch)
     setBreath({ ...engine.breath })
@@ -115,6 +122,16 @@ export default function FpsHud() {
               <span className="ms" ref={(el) => (msRefs.current[key] = el)} />
             </label>
           ))}
+
+          <h4>Benchmark da intro (Fase 3, ainda não ligado)</h4>
+          <button type="button" onClick={runBenchmark} style={{ width: '100%' }}>
+            rodar benchmark (0,4 s)
+          </button>
+          {bench && (
+            <pre data-testid="bench-result" style={{ marginTop: 4, opacity: 0.85 }}>
+              {bench}
+            </pre>
+          )}
 
           <h4>Nevasca</h4>
           <label style={{ display: 'block' }}>

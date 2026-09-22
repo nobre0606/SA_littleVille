@@ -40,8 +40,8 @@ export default function SnowCanvas() {
 
     const off = engine.add((e) => {
       if (e.stage.w === 0) return
-      const { active, storm } = sim.frame(ctx, e, pxScale)
-      e.setSnow({ active, storm })
+      const { active, storm, prof } = sim.frame(ctx, e, pxScale)
+      e.setSnow(prof ? { active, storm, prof } : { active, storm })
     }, 'snow')
 
     return () => {

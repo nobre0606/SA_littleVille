@@ -138,7 +138,15 @@ export function createSnowSim(rand) {
       const fr = (e.stage.w * SCENE.fire.snowWarmRadius.r) / 100 * pxScale
       const fr2 = fr * fr
 
+      // Profiling por fase (só com ?debug=1): mede onde o tempo realmente vai, em vez de
+      // otimizar por suspeita. Ver e2e/profile-snow.mjs para a leitura desses números.
+      const prof = e.debug ? { clear: 0, update: 0, round: 0, front: 0, batch: 0, total: 0 } : null
+      const now = () => performance.now()
+      const tFull = prof && now()
+
+      const tClear = prof && now()
       ctx.clearRect(0, 0, W, H)
+      if (prof) prof.clear = now() - tClear
       let active = 0
 
       for (const L of layers) {
@@ -158,6 +166,7 @@ export function createSnowSim(rand) {
         const streak = tau > 0 && Math.hypot(vx, vy) * tau > L.size[1] * k * 1.6
 
         // --- atualização ---------------------------------------------------------------
+        const t0 = prof && now()
         for (let j = 0; j < cnt; j++) {
           const i = L.start + j
           age[i] += dt
@@ -183,6 +192,9 @@ export function createSnowSim(rand) {
           }
         }
 
+        if (prof) prof.update += now() - t0
+        const t1 = prof && now()
+
         // --- desenho -------------------------------------------------------------------
         if (!streak) {
           // Flocos redondos: sprites (o soft da camada dá o desfoque de profundidade).
@@ -207,6 +219,7 @@ export function createSnowSim(rand) {
               ctx.drawImage(warmGlow, x[i] - r * 3.2, y[i] - r * 3.2, r * 6.4, r * 6.4)
             }
           }
+          if (prof) prof.round += now() - t1
         } else if (front) {
           // Frente em tempestade: bokeh esticado e rotacionado na direção da velocidade.
           for (let j = 0; j < cnt; j++) {
@@ -221,10 +234,11 @@ export function createSnowSim(rand) {
             ctx.drawImage(wt[i] > 0.5 ? warm : sprites[2][col[i] === 1 ? 1 : 0], -len - r, -r * 0.8, len + r * 2, r * 1.6)
           }
           ctx.setTransform(1, 0, 0, 1, 0, 0)
+          if (prof) prof.front += now() - t1
         } else {
           // Fundo/meio em tempestade: traços em lote (1 stroke por balde tamanho × quente × gelo),
           // cada floco com a própria velocidade/ângulo; alpha e espessura crescem com o tamanho.
-          ctx.lineCap = 'round'
+          ctx.lineCap = 'butt' // traços de 1-2px: a ponta arredondada é invisível nesse calibre
           ctx.globalAlpha = 1
           const range = L.size[1] - L.size[0]
           const arange = L.alpha[1] - L.alpha[0]
@@ -255,10 +269,12 @@ export function createSnowSim(rand) {
             ctx.globalAlpha = pa[i] * (0.35 + 0.65 * Math.abs(Math.sin(t * 2.2 + ph[i])))
             ctx.drawImage(glint, x[i] - gr, y[i] - gr, gr * 2, gr * 2)
           }
+          if (prof) prof.batch += now() - t1
         }
       }
       ctx.globalAlpha = 1
-      return { active, storm }
+      if (prof) prof.total = now() - tFull
+      return { active, storm, prof }
     },
   }
 }
