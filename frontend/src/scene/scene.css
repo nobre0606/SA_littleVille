@@ -271,6 +271,26 @@
   accent-color: #ff9a3c;
 }
 
+/* Fallback do error boundary: degradê estático, sem canvas/GSAP/timers (nada que possa
+   lançar de novo). Mantém a paleta da cena para não parecer uma tela de erro genérica. */
+.lv-scene-fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 18% 70%, rgba(255, 154, 60, 0.14), transparent 55%),
+    linear-gradient(135deg, #05080f 0%, #0a1220 45%, #0d1b2e 75%, #05080f 100%);
+}
+.lv-scene-fallback-fire {
+  position: absolute;
+  left: 15%;
+  bottom: 12%;
+  width: 10%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 176, 102, 0.5), transparent 70%);
+  filter: blur(12px);
+}
+
 /* Toggle de camadas do HUD de debug: o motor escreve `data-off` na raiz. */
 :root[data-off~="background"] [data-layer="background"] {
   display: none !important;

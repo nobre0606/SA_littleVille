@@ -18,6 +18,16 @@
  *      *conseguindo* sustentar a própria taxa, não o valor nominal dela.
  * Mediana em vez de média nos dois cálculos porque um único frame de GC/JIT no meio da amostra
  * não pode arrastar a leitura inteira.
+ *
+ * Investigado e descartado: o overlay opaco por cima NÃO faz o navegador pular a pintura das
+ * camadas de baixo (occlusion culling) — medido A/B/C (opaco vs. transparente vs. removido) em
+ * Chromium e WebKit, custo idêntico nos três. O bug real era outro: `engine.dt` é limitado a
+ * 50 ms (proteção contra picos ao voltar de aba oculta, ver createEngine.js). Sob carga
+ * pesada de verdade, TODO frame batia nesse teto — 11/11 amostras exatamente em 50,0 ms, nos
+ * dois motores — e como tudo ficava idêntico a 50 ms, a proporção de "frames perdidos" saía
+ * zerada e o benchmark decidia `high` mesmo muito além do que o teto deixava aparecer. Por
+ * isso a medição aqui usa relógio de parede próprio (`now`, `performance.now()` por padrão),
+ * nunca `engine.dt`.
  */
 
 /** Tetos de partículas por tier, na mesma escala 0..1500 de SNOW_MAX (snowSim.js). */
@@ -52,6 +62,15 @@ export function classifyByDropRatio(dropRatio) {
 }
 
 /**
+ * Piso absoluto: abaixo de ~24 fps sustentados não existe display de verdade (nenhum monitor
+ * atualiza a essa taxa nominalmente) — é o aparelho patinando de forma CONSISTENTE. A
+ * proporção de frames perdidos sozinha não pega isso: um device preso em 47ms/frame o tempo
+ * todo, sem nenhuma variação, tem 0% de "frames perdidos" em relação à própria mediana (nada
+ * excede 1,5× ela mesma). Por isso o piso força `low` mesmo com drop ratio baixo.
+ */
+const ABSOLUTE_FLOOR_MS = 1000 / 24
+
+/**
  * `intervalsMs`: duração real de cada frame pós-warmup, em ms (não suavizada). Retorna a
  * mediana (~intervalo nominal do display), a taxa detectada (Hz, só informativa) e o tier.
  */
@@ -63,7 +82,8 @@ export function analyzeFrameIntervals(intervalsMs) {
   const threshold = refreshMs * 1.5
   const dropped = intervalsMs.reduce((n, ms) => n + (ms > threshold ? 1 : 0), 0)
   const dropRatio = dropped / intervalsMs.length
-  return { refreshMs, hz: 1000 / refreshMs, dropRatio, dropped, frames: intervalsMs.length, tier: classifyByDropRatio(dropRatio) }
+  const tier = refreshMs > ABSOLUTE_FLOOR_MS ? 'low' : classifyByDropRatio(dropRatio)
+  return { refreshMs, hz: 1000 / refreshMs, dropRatio, dropped, frames: intervalsMs.length, tier }
 }
 
 /**
@@ -75,7 +95,7 @@ export function analyzeFrameIntervals(intervalsMs) {
  *
  * Usa o mesmo loop único do motor (`engine.add`), sem `requestAnimationFrame` próprio.
  */
-export function runIntroBenchmark(engine, { sampleMs = 400, warmupFrames = 3 } = {}) {
+export function runIntroBenchmark(engine, { sampleMs = 400, warmupFrames = 3, now = () => performance.now() } = {}) {
   return new Promise((resolve) => {
     engine.setSnow({ intensity: 1 })
     engine.setWindIntensity(BENCH_WIND_INTENSITY)
@@ -84,6 +104,7 @@ export function runIntroBenchmark(engine, { sampleMs = 400, warmupFrames = 3 } =
     let n = 0
     let elapsed = 0
     let settled = false
+    let lastTs = null // relógio de parede do JS, não engine.dt (que é limitado a 50ms)
 
     const finish = (result) => {
       if (settled) return
@@ -94,10 +115,12 @@ export function runIntroBenchmark(engine, { sampleMs = 400, warmupFrames = 3 } =
       resolve(result)
     }
 
-    const off = engine.add((e) => {
+    const off = engine.add(() => {
       n++
-      if (n <= warmupFrames) return // pico de JIT/decode do início, descartado
-      const ms = e.dt * 1000
+      const t = now()
+      const ms = lastTs === null ? null : t - lastTs
+      lastTs = t
+      if (ms === null || n <= warmupFrames + 1) return // pico de JIT/decode do início, descartado
       intervals.push(ms)
       elapsed += ms
       if (elapsed >= sampleMs && intervals.length >= 6) finish(analyzeFrameIntervals(intervals))

@@ -58,6 +58,21 @@ test('analyzeFrameIntervals: 15ms constante em 60Hz NÃO seria mais rápido que 
   assert.equal(r.tier, 'high') // ...classifica como alta, porque não há frame perdido
 })
 
+test('analyzeFrameIntervals: dispositivo consistentemente lento (~47ms, sem variar) -> low pelo piso absoluto', () => {
+  // 0% de "frames perdidos" em relação à própria mediana (nada varia), mas ~21fps sustentados
+  // não é uma taxa de display de verdade — é o piso absoluto (ABSOLUTE_FLOOR_MS) que pega isso.
+  const r = analyzeFrameIntervals(buildIntervals(30, 47))
+  assert.equal(r.dropRatio, 0)
+  assert.equal(r.tier, 'low')
+})
+
+test('analyzeFrameIntervals: 24fps exatos (limite do piso) -> ainda high; um pouco abaixo -> low', () => {
+  const noFloor = analyzeFrameIntervals(buildIntervals(20, 1000 / 24))
+  assert.equal(noFloor.tier, 'high')
+  const belowFloor = analyzeFrameIntervals(buildIntervals(20, 1000 / 23))
+  assert.equal(belowFloor.tier, 'low')
+})
+
 test('analyzeFrameIntervals: amostra vazia -> medium (neutro), sem lançar', () => {
   const r = analyzeFrameIntervals([])
   assert.equal(r.tier, 'medium')
@@ -89,18 +104,24 @@ function fakeEngine() {
       engine.wind.intensity = v
       engine.calls.setWindIntensity.push(v)
     },
-    tick(msPerFrame) {
+    clock: 0, // relógio de parede falso: avança por `tick`, independente do dt (clampado) do motor
+    /** `realMs` (opcional): tempo real que passou, se DIFERENTE do `msPerFrame` que o motor usa
+     * para o dt — é assim que o teste de regressão do clamp de 50ms simula a situação real. */
+    tick(msPerFrame, realMs = msPerFrame) {
       engine.dt = msPerFrame / 1000
       engine.fps.ms = msPerFrame
+      engine.clock += realMs
       for (const fn of [...subs]) fn(engine)
     },
   }
   return engine
 }
 
+const withClock = (e, extra) => ({ now: () => e.clock, ...extra })
+
 test('runIntroBenchmark: força tempestade cheia para medir, aplica o tier decidido ao terminar', async () => {
   const e = fakeEngine()
-  const p = runIntroBenchmark(e, { sampleMs: 150, warmupFrames: 2 })
+  const p = runIntroBenchmark(e, withClock(e, { sampleMs: 150, warmupFrames: 2 }))
   assert.equal(e.snow.intensity, 1) // já forçou tempestade cheia (escondida atrás do overlay)
   assert.equal(e.wind.intensity, 1.6)
   for (let i = 0; i < 20; i++) e.tick(1000 / 60) // 60Hz perfeito -> deve decidir 'high'
@@ -114,7 +135,7 @@ test('runIntroBenchmark: dispositivo lento (muitos drops) -> aplica snowIntensit
   // 1 a cada 3 frames é perdido (~33%, minoria — a mediana continua ancorada nos 16.7ms
   // normais, que é a maioria; um 50/50 mudaria a própria mediana e deixaria de ser "drop").
   const e = fakeEngine()
-  const p = runIntroBenchmark(e, { sampleMs: 150, warmupFrames: 2 })
+  const p = runIntroBenchmark(e, withClock(e, { sampleMs: 150, warmupFrames: 2 }))
   for (let i = 0; i < 24; i++) e.tick((i + 1) % 3 === 0 ? 16.667 * 2.2 : 16.667)
   const r = await p
   assert.equal(r.tier, 'low')
@@ -123,7 +144,7 @@ test('runIntroBenchmark: dispositivo lento (muitos drops) -> aplica snowIntensit
 
 test('runIntroBenchmark: descarta os frames de warmup (não conta o pico de JIT/decode)', async () => {
   const e = fakeEngine()
-  const p = runIntroBenchmark(e, { sampleMs: 100, warmupFrames: 5 })
+  const p = runIntroBenchmark(e, withClock(e, { sampleMs: 100, warmupFrames: 5 }))
   for (let i = 0; i < 5; i++) e.tick(200) // pico inicial: se contasse, derrubaria para 'low'
   for (let i = 0; i < 20; i++) e.tick(1000 / 60)
   const r = await p
@@ -132,7 +153,7 @@ test('runIntroBenchmark: descarta os frames de warmup (não conta o pico de JIT/
 
 test('runIntroBenchmark: cancela o assinante ao terminar (sem vazamento)', async () => {
   const e = fakeEngine()
-  const p = runIntroBenchmark(e, { sampleMs: 50, warmupFrames: 1 })
+  const p = runIntroBenchmark(e, withClock(e, { sampleMs: 50, warmupFrames: 1 }))
   for (let i = 0; i < 15; i++) e.tick(1000 / 60)
   await p
   const seen = []
@@ -140,4 +161,19 @@ test('runIntroBenchmark: cancela o assinante ao terminar (sem vazamento)', async
   e.tick(1000 / 60)
   assert.equal(seen.length, 1) // só o novo assinante roda; o do benchmark já foi removido
   off()
+})
+
+test('runIntroBenchmark: regressão do clamp de 50ms — mede pelo relógio de parede, não por engine.dt', async () => {
+  // O motor limita dt a 50ms (proteção contra picos ao voltar de aba oculta, createEngine.js).
+  // Sob carga pesada de verdade (aqui: 120ms reais por frame), TODO frame bateria nesse teto
+  // e ficaria com dt=50ms — se o benchmark ainda lesse engine.dt, veria 0% de frames perdidos
+  // (tudo "igual" a 50ms) e decidiria 'high' mesmo com o aparelho a menos de 10fps reais. Com
+  // `now` (relógio de parede próprio), o benchmark precisa ver os 120ms de verdade.
+  const e = fakeEngine()
+  const p = runIntroBenchmark(e, withClock(e, { sampleMs: 150, warmupFrames: 2 }))
+  for (let i = 0; i < 12; i++) e.tick(50, 120) // dt do motor sempre 50ms; relógio real avança 120ms
+  const r = await p
+  assert.ok(r.refreshMs > 100, `refreshMs deveria refletir os 120ms reais, veio ${r.refreshMs}`)
+  assert.equal(r.tier, 'low')
+  assert.notEqual(r.tier, 'high') // a leitura antiga (via engine.dt) cairia aqui, incorretamente
 })
