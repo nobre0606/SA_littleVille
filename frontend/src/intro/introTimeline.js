@@ -117,7 +117,7 @@ export function buildIntroTimeline(els, deps) {
   // (o tween de suavização E uma eventual redução do watchdog brigando pelo mesmo valor).
   tl.call(() => introState.watchdog?.dispose(), null, 5.0)
   tl.to(engine.snow, { intensity: SNOW_CALM, duration: 3 }, 5.0)
-  tl.to(wind, { v: 1, duration: 3 }, 5.0)
+  tl.to(wind, { v: 1, duration: 3, onUpdate: () => engine.setWindIntensity(wind.v) }, 5.0)
   tl.to(els.mist, { opacity: 0, duration: 3 }, 5.0)
   tl.to(els.scene, { filter: 'blur(0px) brightness(1)', duration: 3 }, 5.0)
   tl.to(engine.ignite, { fire: 1, duration: 2.6 }, 5.2)
