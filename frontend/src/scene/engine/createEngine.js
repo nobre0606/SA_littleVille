@@ -83,7 +83,9 @@ export function createEngine({
   const off = new Set(initialOff)
   const breathListeners = new Set()
   const introListeners = new Set()
+  const crashListeners = new Set()
   const governor = createQualityGovernor({ level: forcedQuality ?? QUALITY.HIGH })
+  let crashed = false
 
   // monitor de FPS
   let winFrames = 0
@@ -213,6 +215,18 @@ export function createEngine({
       introListeners.add(fn)
       return () => introListeners.delete(fn)
     },
+
+    /**
+     * Um error boundary do React só pega erros lançados DURANTE a renderização/efeitos — o
+     * dispatch dos assinantes roda dentro do `gsap.ticker` (fora do ciclo do React), então um
+     * erro ali nunca chegaria a um boundary sozinho. `onCrash` é o elo: quem escuta (ver
+     * `EngineCrashRelay` em SceneScreen.jsx) guarda o erro num `useState` e o relança na
+     * property seguinte, aí sim dentro do render — é isso que o boundary consegue capturar.
+     */
+    onCrash(fn) {
+      crashListeners.add(fn)
+      return () => crashListeners.delete(fn)
+    },
   }
 
   function applyOff() {
@@ -254,6 +268,7 @@ export function createEngine({
   }
 
   function tick(_time, deltaMs) {
+    if (crashed) return // o motor já parou; não faz mais nada até a página recarregar
     const dt = Math.min(deltaMs, 50) / 1000
     if (dt <= 0) return
     const t0 = debug ? performance.now() : 0
@@ -272,18 +287,31 @@ export function createEngine({
 
     monitor(dt)
 
-    if (debug) {
-      const lm = engine.layerMs
-      for (const s of subs) {
-        if (off.has(s.name)) continue
-        const a = performance.now()
-        s.fn(engine)
-        const d = performance.now() - a
-        lm[s.name] = (lm[s.name] ?? d) + (d - (lm[s.name] ?? d)) * 0.05
+    // O dispatch dos assinantes é a única parte do tick que roda código de fora do motor
+    // (cada camada, a intro, o HUD). Se uma delas lançar, sem isto o erro escaparia direto do
+    // callback do gsap.ticker: nenhum error boundary do React o veria (não é código de render),
+    // e o navegador só logaria e seguiria chamando tick() de novo no frame seguinte — quebrando
+    // de novo a cada frame, com o resto da cena meio atualizada, sem ninguém notar de verdade.
+    // No primeiro erro: para o motor, remove o listener do ticker (`engine.stop()` faz as
+    // duas coisas) e propaga pro React via `onCrash` — ver o comentário em cima dele.
+    try {
+      if (debug) {
+        const lm = engine.layerMs
+        for (const s of subs) {
+          if (off.has(s.name)) continue
+          const a = performance.now()
+          s.fn(engine)
+          const d = performance.now() - a
+          lm[s.name] = (lm[s.name] ?? d) + (d - (lm[s.name] ?? d)) * 0.05
+        }
+        engine.jsMs += (performance.now() - t0 - engine.jsMs) * 0.05
+      } else {
+        for (const s of subs) if (!off.has(s.name)) s.fn(engine)
       }
-      engine.jsMs += (performance.now() - t0 - engine.jsMs) * 0.05
-    } else {
-      for (const s of subs) if (!off.has(s.name)) s.fn(engine)
+    } catch (err) {
+      crashed = true
+      engine.stop()
+      for (const fn of crashListeners) fn(err)
     }
   }
 

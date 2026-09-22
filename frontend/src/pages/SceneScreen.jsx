@@ -18,13 +18,43 @@ import FpsHud from '../scene/debug/FpsHud.jsx'
 import IntroOverlay from '../intro/IntroOverlay.jsx'
 
 /**
- * Gatilho de teste do error boundary: `?crash=<qualquer coisa>` derruba a cena de propósito.
- * Existe só pra provar que o boundary funciona (ver e2e/verify-error-boundary.mjs) — nunca
- * dispara sozinho, e não tem custo nenhum quando o parâmetro não está na URL.
+ * Gatilho de teste do error boundary: `?crash=1` (ou qualquer valor exceto `tick`) derruba a
+ * cena de propósito DURANTE A RENDERIZAÇÃO — o caso que um error boundary pega sozinho, sem
+ * precisar de `engine.onCrash`. Existe só pra provar que o boundary funciona (ver
+ * e2e/verify-error-boundary.mjs); nunca dispara sozinho e não tem custo quando ausente.
  */
 function CrashProbe() {
   const crash = new URLSearchParams(window.location.search).get('crash')
-  if (crash) throw new Error(`Falha forçada para teste do error boundary (?crash=${crash})`)
+  if (crash && crash !== 'tick') throw new Error(`Falha forçada para teste do error boundary (?crash=${crash})`)
+  return null
+}
+
+/**
+ * Gatilho de teste do OUTRO caminho: `?crash=tick` registra uma camada que lança DENTRO do
+ * loop do motor (gsap.ticker), não durante a renderização — é o caso que só o try/catch do
+ * `tick()` + `engine.onCrash()` conseguem pegar (ver createEngine.js).
+ */
+function TickCrashProbe() {
+  const engine = useEngine()
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('crash') !== 'tick') return
+    return engine.add(() => {
+      throw new Error('Falha forçada dentro do loop do motor (?crash=tick)')
+    }, 'tickCrashProbe')
+  }, [engine])
+  return null
+}
+
+/**
+ * Ponte entre o motor (fora do React) e o error boundary (só pega erros durante o render):
+ * guarda o erro do `engine.onCrash` num state e o relança na próxima renderização — é isso que
+ * o boundary consegue capturar. Fica DENTRO do boundary (é filho dele), então o relance é
+ * pego corretamente; fica FORA do slot do card (que é irmão do boundary em SceneContent).
+ */
+function EngineCrashRelay({ engine }) {
+  const [error, setError] = useState(null)
+  useEffect(() => engine.onCrash(setError), [engine])
+  if (error) throw error
   return null
 }
 
@@ -46,6 +76,8 @@ function SceneContent({ backgroundVideo }) {
           DE FORA deste boundary de propósito: uma queda aqui nunca o leva junto. */}
       <SceneErrorBoundary>
         <CrashProbe />
+        <TickCrashProbe />
+        <EngineCrashRelay engine={engine} />
         {/* Desktop: a cena ocupa tudo. Retrato: ocupa o topo; o card (Fase 4) fica embaixo. */}
         <div ref={sceneRef} className="absolute inset-x-0 top-0 h-full portrait:h-[58svh]" aria-hidden="true">
           <SceneStage>

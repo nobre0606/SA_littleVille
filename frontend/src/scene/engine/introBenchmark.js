@@ -28,7 +28,36 @@
  * zerada e o benchmark decidia `high` mesmo muito além do que o teto deixava aparecer. Por
  * isso a medição aqui usa relógio de parede próprio (`now`, `performance.now()` por padrão),
  * nunca `engine.dt`.
+ *
+ * Segundo bug corrigido, mais sutil: mesmo com o relógio de parede certo, usar a MEDIANA
+ * MEDIDA como se fosse a taxa do display é um erro — sob carga, a mediana já reflete a
+ * lentidão (35 ms/frame ≈ 28 Hz "medidos"), e a proporção de frames perdidos passa a ser
+ * calculada EM CIMA dessa própria lentidão: nada "excede" uma mediana que já está lenta, e o
+ * benchmark aprende a lentidão como se fosse normal. A correção é arredondar a taxa bruta
+ * detectada para a taxa padrão de display MAIS PRÓXIMA (60/75/90/100/120/144/165/240 Hz) — e
+ * qualquer coisa mais lenta que 60 Hz vira 60 Hz, porque nenhum monitor de verdade atualiza
+ * mais devagar que isso; a lentidão é do aparelho, não do display. O piso absoluto de ~24 fps
+ * que existia antes fica redundante com isso (o arredondamento pro mínimo de 60 Hz já garante
+ * uma base rápida o bastante pra qualquer carga pesada aparecer como frame perdido).
  */
+
+/** Taxas de display padrão. A lista já define o piso: 60 é a mais baixa, então qualquer
+ * estimativa bruta mais lenta que isso "arredonda para cima" para 60 Hz automaticamente. */
+const STANDARD_HZ = [60, 75, 90, 100, 120, 144, 165, 240]
+
+function snapToStandardHz(rawHz) {
+  if (!Number.isFinite(rawHz) || rawHz <= 0) return 60 // amostra inválida: assume o mais comum
+  let best = STANDARD_HZ[0]
+  let bestDiff = Math.abs(rawHz - best)
+  for (const hz of STANDARD_HZ) {
+    const diff = Math.abs(rawHz - hz)
+    if (diff < bestDiff) {
+      best = hz
+      bestDiff = diff
+    }
+  }
+  return best
+}
 
 /** Tetos de partículas por tier, na mesma escala 0..1500 de SNOW_MAX (snowSim.js). */
 export const STORM_TIERS = {
@@ -62,28 +91,21 @@ export function classifyByDropRatio(dropRatio) {
 }
 
 /**
- * Piso absoluto: abaixo de ~24 fps sustentados não existe display de verdade (nenhum monitor
- * atualiza a essa taxa nominalmente) — é o aparelho patinando de forma CONSISTENTE. A
- * proporção de frames perdidos sozinha não pega isso: um device preso em 47ms/frame o tempo
- * todo, sem nenhuma variação, tem 0% de "frames perdidos" em relação à própria mediana (nada
- * excede 1,5× ela mesma). Por isso o piso força `low` mesmo com drop ratio baixo.
- */
-const ABSOLUTE_FLOOR_MS = 1000 / 24
-
-/**
- * `intervalsMs`: duração real de cada frame pós-warmup, em ms (não suavizada). Retorna a
- * mediana (~intervalo nominal do display), a taxa detectada (Hz, só informativa) e o tier.
+ * `intervalsMs`: duração real de cada frame pós-warmup, em ms (não suavizada). `refreshMs`/`hz`
+ * no retorno são a taxa PADRÃO ASSUMIDA (depois do arredondamento), não a mediana bruta medida
+ * — é contra essa taxa assumida que a proporção de frames perdidos é calculada.
  */
 export function analyzeFrameIntervals(intervalsMs) {
   if (!intervalsMs || intervalsMs.length === 0) {
     return { refreshMs: NaN, hz: NaN, dropRatio: NaN, dropped: 0, frames: 0, tier: 'medium' }
   }
-  const refreshMs = median(intervalsMs)
+  const rawMedian = median(intervalsMs)
+  const hz = snapToStandardHz(1000 / rawMedian)
+  const refreshMs = 1000 / hz
   const threshold = refreshMs * 1.5
   const dropped = intervalsMs.reduce((n, ms) => n + (ms > threshold ? 1 : 0), 0)
   const dropRatio = dropped / intervalsMs.length
-  const tier = refreshMs > ABSOLUTE_FLOOR_MS ? 'low' : classifyByDropRatio(dropRatio)
-  return { refreshMs, hz: 1000 / refreshMs, dropRatio, dropped, frames: intervalsMs.length, tier }
+  return { refreshMs, hz, dropRatio, dropped, frames: intervalsMs.length, tier: classifyByDropRatio(dropRatio) }
 }
 
 /**

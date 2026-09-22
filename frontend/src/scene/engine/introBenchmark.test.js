@@ -58,19 +58,35 @@ test('analyzeFrameIntervals: 15ms constante em 60Hz NÃO seria mais rápido que 
   assert.equal(r.tier, 'high') // ...classifica como alta, porque não há frame perdido
 })
 
-test('analyzeFrameIntervals: dispositivo consistentemente lento (~47ms, sem variar) -> low pelo piso absoluto', () => {
-  // 0% de "frames perdidos" em relação à própria mediana (nada varia), mas ~21fps sustentados
-  // não é uma taxa de display de verdade — é o piso absoluto (ABSOLUTE_FLOOR_MS) que pega isso.
-  const r = analyzeFrameIntervals(buildIntervals(30, 47))
-  assert.equal(r.dropRatio, 0)
-  assert.equal(r.tier, 'low')
+test('analyzeFrameIntervals: dispositivo consistentemente lento (35ms, sem variar) -> nunca high (arredonda pra 60Hz, não pra própria lentidão)', () => {
+  // Sem o arredondamento, a mediana medida (35ms ≈ 28Hz) viraria a própria "taxa do display",
+  // e nada excederia 1.5x dela mesma (0% de frames perdidos, decidiria 'high' incorretamente —
+  // foi exatamente isso que aconteceu no WebKit real, 35.4ms classificado como 'high'). Com o
+  // arredondamento pra 60Hz (a mínima da lista), o piso de comparação vira 16.7ms e todo frame
+  // de 35ms estoura o limiar de 1.5x — resultado tem que ser low ou medium, nunca high.
+  const r = analyzeFrameIntervals(buildIntervals(30, 35))
+  assert.equal(r.hz, 60) // arredondado pro mínimo da lista, não pros ~28Hz medidos
+  assert.notEqual(r.tier, 'high')
 })
 
-test('analyzeFrameIntervals: 24fps exatos (limite do piso) -> ainda high; um pouco abaixo -> low', () => {
-  const noFloor = analyzeFrameIntervals(buildIntervals(20, 1000 / 24))
-  assert.equal(noFloor.tier, 'high')
-  const belowFloor = analyzeFrameIntervals(buildIntervals(20, 1000 / 23))
-  assert.equal(belowFloor.tier, 'low')
+test('analyzeFrameIntervals: 16.7ms consistente -> high (caso exato pedido na revisão)', () => {
+  const r = analyzeFrameIntervals(buildIntervals(30, 16.7))
+  assert.equal(r.tier, 'high')
+})
+
+test('analyzeFrameIntervals: 8.3ms consistente -> high em 120Hz (caso exato pedido na revisão)', () => {
+  const r = analyzeFrameIntervals(buildIntervals(30, 8.3))
+  assert.equal(r.hz, 120)
+  assert.equal(r.tier, 'high')
+})
+
+test('snapToStandardHz (via analyzeFrameIntervals): arredonda pra taxa padrão mais próxima', () => {
+  assert.equal(analyzeFrameIntervals(buildIntervals(20, 1000 / 90)).hz, 90)
+  assert.equal(analyzeFrameIntervals(buildIntervals(20, 1000 / 144)).hz, 144)
+  assert.equal(analyzeFrameIntervals(buildIntervals(20, 1000 / 240)).hz, 240)
+  // qualquer coisa mais lenta que 60Hz vira 60Hz (é a menor taxa da lista)
+  assert.equal(analyzeFrameIntervals(buildIntervals(20, 1000 / 45)).hz, 60)
+  assert.equal(analyzeFrameIntervals(buildIntervals(20, 200)).hz, 60)
 })
 
 test('analyzeFrameIntervals: amostra vazia -> medium (neutro), sem lançar', () => {
@@ -173,7 +189,10 @@ test('runIntroBenchmark: regressão do clamp de 50ms — mede pelo relógio de p
   const p = runIntroBenchmark(e, withClock(e, { sampleMs: 150, warmupFrames: 2 }))
   for (let i = 0; i < 12; i++) e.tick(50, 120) // dt do motor sempre 50ms; relógio real avança 120ms
   const r = await p
-  assert.ok(r.refreshMs > 100, `refreshMs deveria refletir os 120ms reais, veio ${r.refreshMs}`)
+  // refreshMs agora é a taxa PADRÃO assumida (arredondada), não a mediana bruta — por isso o
+  // que prova que os 120ms reais foram vistos é o drop ratio (quase tudo estoura o limiar de
+  // 1.5x contra os 16.7ms de 60Hz assumidos), não um refreshMs alto.
+  assert.ok(r.dropRatio > 0.9, `dropRatio deveria refletir os 120ms reais, veio ${r.dropRatio}`)
   assert.equal(r.tier, 'low')
   assert.notEqual(r.tier, 'high') // a leitura antiga (via engine.dt) cairia aqui, incorretamente
 })
