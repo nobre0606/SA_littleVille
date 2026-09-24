@@ -4,8 +4,19 @@
  * Nenhuma cor literal aqui — só var(--token).
  */
 
+/*
+ * O <html> também precisa do fundo claro: o index.css pinta html/body/#root com o escuro da
+ * intro e fixa a altura em 100% da tela. Numa página mais comprida que a tela, o conteúdo que
+ * passa da primeira dobra ficaria sobre o <html> ESCURO (bug achado pelo axe: texto ink-1
+ * sobre --lv-bg). Por isso: fundo claro no html e altura mínima (não fixa) no body e no #root.
+ */
+:root[data-area="app"] {
+  background: var(--surface-app);
+}
 :root[data-area="app"] body,
 :root[data-area="app"] #root {
+  height: auto;
+  min-height: 100%;
   background: var(--surface-app);
   color: var(--ink-1);
   font-family: var(--font-ui);
@@ -15,7 +26,7 @@
 }
 
 /* Foco sempre visível (teclado), nunca removido. Contorno de 2px na cor primária (7.7:1). */
-:root[data-area="app"] :focus-visible {
+[data-area="app"] :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
@@ -23,9 +34,9 @@
 /* Rede de segurança do movimento reduzido: além dos tokens de duração zerados, corta qualquer
    animação que não use token (ex.: de uma biblioteca). */
 @media (prefers-reduced-motion: reduce) {
-  :root[data-area="app"] *,
-  :root[data-area="app"] *::before,
-  :root[data-area="app"] *::after {
+  [data-area="app"] *,
+  [data-area="app"] *::before,
+  [data-area="app"] *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -177,4 +188,18 @@
 }
 .lv-toast {
   animation: lv-toast-in var(--dur-base) var(--ease-out);
+}
+
+/* Mascote "carregando": balanço leve (parado com movimento reduzido). */
+@keyframes lv-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.lv-bob {
+  animation: lv-bob 1.6s var(--ease-inout) infinite;
 }

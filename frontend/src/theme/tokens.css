@@ -87,7 +87,8 @@
  *   cor semântica sobre pastel ..................... 3.6–3.9 → só ícone; texto do badge é ink-1
  *   border-strong sobre branco ..................... 1.7    → só divisória; borda de campo usa ink-3
  * ======================================================================================== */
-:root[data-area="app"] {
+:root[data-area="app"],
+[data-area="app"] {
   color-scheme: light;
 
   /* Superfícies e tinta */
@@ -141,10 +142,12 @@
   --container-max: 1280px;
   --gutter: 16px; /* 4 colunas no mobile */
   --touch-min: 44px;
+  --largura-lateral: 256px; /* barra de navegação lateral (desktop) */
 }
 
 @media (min-width: 1024px) {
-  :root[data-area="app"] {
+  :root[data-area="app"],
+  [data-area="app"] {
     --gutter: 24px; /* 12 colunas no desktop */
   }
 }
@@ -152,7 +155,8 @@
 /* Movimento reduzido: as durações viram zero, então toda transição/animação que usa os
    tokens some sozinha, sem cada componente precisar lembrar de checar a media query. */
 @media (prefers-reduced-motion: reduce) {
-  :root[data-area="app"] {
+  :root[data-area="app"],
+  [data-area="app"] {
     --dur-fast: 0ms;
     --dur-base: 0ms;
     --dur-slow: 0ms;

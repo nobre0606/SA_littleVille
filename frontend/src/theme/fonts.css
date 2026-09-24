@@ -1,15 +1,48 @@
 /*
- * Fontes self-hosted via @fontsource (nenhuma requisição a domínio externo — funciona offline e
- * não vaza o IP do usuário para o Google Fonts).
+ * Fontes self-hosted (pacotes @fontsource, sem requisição a domínio externo: funciona offline
+ * e não entrega o IP do usuário ao Google Fonts).
  *
- * Só o subconjunto "latin" (U+0000–00FF + pontuação): cobre todo o português (ã, ç, é, õ...).
- * Resultado: exatamente 5 arquivos woff2 — Fredoka 400/600 e Nunito Sans 400/600/700.
- * `font-display: swap` já vem do @fontsource: o texto aparece na hora com a fonte de sistema
- * e troca quando a fonte chega (nunca texto invisível).
- * Pré-carregamento: só Nunito 400 e Fredoka 600 (acima da dobra) — ver fontPreload em vite.config.js.
+ * Declaramos o @font-face à mão em vez de importar o CSS do @fontsource porque o dele inclui
+ * também o formato .woff antigo — o build teria 10 arquivos. Aqui entram EXATAMENTE 5 woff2:
+ * Fredoka 400/600 e Nunito Sans 400/600/700, só o subconjunto "latin" (cobre todo o português).
+ *
+ * `font-display: swap`: o texto aparece na hora com a fonte do sistema e troca quando a fonte
+ * chega — nunca texto invisível. Pré-carregamento só de Nunito 400 e Fredoka 600 (acima da
+ * dobra): ver o plugin `preloadFontes` em vite.config.js.
  */
-@import "@fontsource/fredoka/latin-400.css";
-@import "@fontsource/fredoka/latin-600.css";
-@import "@fontsource/nunito-sans/latin-400.css";
-@import "@fontsource/nunito-sans/latin-600.css";
-@import "@fontsource/nunito-sans/latin-700.css";
+
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/fredoka/files/fredoka-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/fredoka/files/fredoka-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("@fontsource/nunito-sans/files/nunito-sans-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/nunito-sans/files/nunito-sans-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("@fontsource/nunito-sans/files/nunito-sans-latin-700-normal.woff2") format("woff2");
+}
