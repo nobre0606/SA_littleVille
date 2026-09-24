@@ -1,0 +1,180 @@
+/*
+ * Base do app (depois do login). Tudo escopado em `:root[data-area="app"]` pelo mesmo motivo
+ * dos tokens: a intro e o card de login continuam com o visual escuro deles.
+ * Nenhuma cor literal aqui — só var(--token).
+ */
+
+:root[data-area="app"] body,
+:root[data-area="app"] #root {
+  background: var(--surface-app);
+  color: var(--ink-1);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  overscroll-behavior: auto;
+}
+
+/* Foco sempre visível (teclado), nunca removido. Contorno de 2px na cor primária (7.7:1). */
+:root[data-area="app"] :focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Rede de segurança do movimento reduzido: além dos tokens de duração zerados, corta qualquer
+   animação que não use token (ex.: de uma biblioteca). */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-area="app"] *,
+  :root[data-area="app"] *::before,
+  :root[data-area="app"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------------------ layout */
+
+/* Container: máximo 1280px, com a calha lateral do grid (16 mobile / 24 desktop). */
+.lv-container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Grid de 4 colunas no mobile, 12 no desktop. Filhos usam col-span-* do Tailwind. */
+.lv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+@media (min-width: 1024px) {
+  .lv-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+/* ------------------------------------------------------------------ artes por máscara */
+
+/*
+ * Mascote, pegada e montanha são ARQUIVOS de imagem usados como máscara CSS: a forma vem do
+ * arquivo e a cor vem de `background-color` (um token). Por isso as artes não têm cor própria
+ * no código e trocar a arte é só trocar o arquivo.
+ */
+.lv-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* ------------------------------------------------------------------------- animações */
+
+@keyframes lv-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* Skeleton: faixa clara passando sobre a superfície afundada. */
+.lv-skeleton {
+  background: linear-gradient(90deg, var(--surface-sunken) 0%, var(--surface-raised) 50%, var(--surface-sunken) 100%);
+  background-size: 300% 100%;
+  animation: lv-shimmer 1.4s linear infinite;
+}
+
+/* Barra indeterminada (ColdStartScreen). */
+@keyframes lv-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.lv-indeterminate {
+  animation: lv-indeterminate 1.2s var(--ease-inout) infinite;
+}
+
+/* Carregador de pegadas: cada pegada acende em sequência (atraso via --i). */
+@keyframes lv-step {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.lv-step {
+  animation: lv-step 1.2s var(--ease-inout) infinite;
+  animation-delay: calc(var(--i) * 200ms);
+}
+
+/* Entrada de tela (320 ms) — usada no <main> de cada rota. */
+@keyframes lv-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lv-enter {
+  animation: lv-enter var(--dur-slow) var(--ease-out) both;
+}
+
+/* Modal/Sheet: <dialog> nativo. O fundo escurecido usa a tinta com transparência. */
+.lv-dialog::backdrop {
+  background: color-mix(in srgb, var(--ink-1) 45%, transparent);
+}
+.lv-dialog[open] {
+  animation: lv-dialog-in var(--dur-slow) var(--ease-out);
+}
+@keyframes lv-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 767px) {
+  .lv-sheet[open] {
+    animation: lv-sheet-in var(--dur-slow) var(--ease-out);
+  }
+}
+@keyframes lv-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes lv-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lv-toast {
+  animation: lv-toast-in var(--dur-base) var(--ease-out);
+}

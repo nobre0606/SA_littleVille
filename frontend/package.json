@@ -14,16 +14,23 @@
     "diagnose:scene": "node e2e/diagnose.mjs"
   },
   "dependencies": {
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/nunito-sans": "^5.3.0",
     "@gsap/react": "^2.1.2",
+    "@tanstack/react-query": "^5.103.2",
     "gsap": "^3.15.0",
+    "lucide-react": "^1.48.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",
+    "recharts": "^3.10.1",
     "shared": "file:../shared"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@babel/core": "^7.29.7",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.63",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
@@ -34,10 +41,17 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.12.0",
+    "msw": "^2.15.0",
     "playwright": "^1.63.0",
     "potrace": "^2.1.8",
     "sharp": "^0.35.4",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "zod": "^4.6.5"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

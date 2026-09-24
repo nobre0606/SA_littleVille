@@ -59,3 +59,193 @@
   --tab-active-bg: rgba(127, 227, 255, 0.14);
   --tab-indicator: var(--accent-cyan);
 }
+
+/* Cores globais da cena/intro (vieram do index.css — aqui é o único lugar com hexadecimal). */
+:root {
+  --lv-bg: #05080f;
+  --lv-ice: #eaf6ff;
+  --lv-cyan: #7fe3ff;
+  --lv-fire: #ff9a3c;
+}
+
+/* ==========================================================================================
+ * SISTEMA VISUAL DO APP (Fase 0.5) — tudo que vem depois do login.
+ *
+ * POR QUE `:root[data-area="app"]` E NÃO `:root`: o card de login (congelado) usa `--danger` e
+ * `--success` com os valores escuros do tema "caverna" logo acima. Se a paleta clara do app
+ * fosse para `:root`, ela sobrescreveria as cores do card de login. O atributo `data-area="app"`
+ * é colocado no <html> só quando uma tela do app monta (ver src/app/useAppArea.js), então cada
+ * mundo enxerga os seus próprios valores com os MESMOS nomes de variável.
+ *
+ * Contraste medido (WCAG), para saber onde cada cor pode ser usada:
+ *   ink-1 / ink-2 sobre qualquer superfície ........ ≥ 5.8  → texto
+ *   ink-3 sobre branco ............................. 3.6    → só ícone, borda de campo, texto ≥ 24px
+ *   primary sobre branco / primary-soft ............ 7.7 / 6.4
+ *   success 5.0 · danger 5.3 · info 5.2 sobre branco → texto
+ *   warning sobre branco ........................... 4.23   → NÃO serve para texto pequeno
+ *                                                            (só ícone, borda e texto grande)
+ *   cor semântica sobre pastel ..................... 3.6–3.9 → só ícone; texto do badge é ink-1
+ *   border-strong sobre branco ..................... 1.7    → só divisória; borda de campo usa ink-3
+ * ======================================================================================== */
+:root[data-area="app"] {
+  color-scheme: light;
+
+  /* Superfícies e tinta */
+  --surface-app: #fbf8ff;
+  --surface-card: #ffffff;
+  --surface-raised: #f2ecfb;
+  --surface-sunken: #ede6f7;
+  --ink-1: #2b2440;
+  --ink-2: #5b5470;
+  --ink-3: #8a83a0;
+  --border: #e3daf2;
+  --border-strong: #cdbfe6;
+
+  /* Pastéis — APENAS fundo, badge e ilustração. Nunca texto nem ícone sobre branco. */
+  --pastel-lavanda: #c9b8e8;
+  --pastel-azul: #bfd9f2;
+  --pastel-menta: #c8ebd9;
+  --pastel-rosa: #f5cfd8;
+  --pastel-creme: #fff6e9;
+
+  /* Ação e semânticas */
+  --primary: #5b3fa8;
+  --primary-hover: #4a3390;
+  --primary-soft: #ede6fb;
+  --success: #2e7d5b;
+  --warning: #b4690e;
+  --danger: #c2384a;
+  --info: #2f6fb0;
+  /* Texto sobre o botão primário/perigo: o branco da superfície (não é cor nova). */
+  --ink-on-primary: var(--surface-card);
+
+  /* RF04 — idade da área. Cor NUNCA sozinha: sempre com ícone, rótulo e estilo de traço. */
+  --status-fresh: #c2384a; /* < 1 h   — "Recente" — traço sólido */
+  --status-warm: #b4690e; /* 1–2 h   — "1–2 h"   — traço tracejado */
+  --status-cold: #8a83a0; /* > 2 h   — "Antigo"  — traço pontilhado */
+
+  /* Gráficos — nesta ordem, seguras para daltonismo. As cores padrão do Recharts são proibidas. */
+  --chart-1: #5b3fa8;
+  --chart-2: #2f6fb0;
+  --chart-3: #2e7d5b;
+  --chart-4: #b4690e;
+  --chart-5: #c2384a;
+  --chart-6: #7a6a95;
+
+  /* Movimento — nada acima de 320 ms */
+  --dur-fast: 120ms; /* hover, foco */
+  --dur-base: 200ms; /* abrir/fechar, toast */
+  --dur-slow: 320ms; /* entrada de tela, modal */
+
+  /* Layout */
+  --container-max: 1280px;
+  --gutter: 16px; /* 4 colunas no mobile */
+  --touch-min: 44px;
+}
+
+@media (min-width: 1024px) {
+  :root[data-area="app"] {
+    --gutter: 24px; /* 12 colunas no desktop */
+  }
+}
+
+/* Movimento reduzido: as durações viram zero, então toda transição/animação que usa os
+   tokens some sozinha, sem cada componente precisar lembrar de checar a media query. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-area="app"] {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------
+ * Tema do Tailwind. `--*: initial` APAGA a escala padrão do Tailwind (cores, fontes, tamanhos,
+ * raios, sombras) — assim `bg-blue-500`, `text-lg` ou `rounded-md` padrão simplesmente não
+ * existem, e é impossível usar um valor fora do sistema por engano. Os arquivos congelados
+ * (cena, intro, login) não usam nenhum desses utilitários, então nada muda para eles.
+ * ---------------------------------------------------------------------------------------- */
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --breakpoint-*: initial;
+  --ease-*: initial;
+
+  /* Tipografia: Fredoka (títulos, números, marca) + Nunito Sans (interface). */
+  --font-display: "Fredoka", system-ui, sans-serif;
+  --font-ui: "Nunito Sans", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Escala 12/14/16/20/24/32/40. Corpo 1.5; títulos (20+) 1.2. */
+  --text-12: 0.75rem;
+  --text-12--line-height: 1.5;
+  --text-14: 0.875rem;
+  --text-14--line-height: 1.5;
+  --text-16: 1rem;
+  --text-16--line-height: 1.5;
+  --text-20: 1.25rem;
+  --text-20--line-height: 1.2;
+  --text-24: 1.5rem;
+  --text-24--line-height: 1.2;
+  --text-32: 2rem;
+  --text-32--line-height: 1.2;
+  --text-40: 2.5rem;
+  --text-40--line-height: 1.2;
+
+  /* Raio */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  /* Sombras */
+  --shadow-1: 0 1px 2px rgba(43, 36, 64, 0.06), 0 1px 3px rgba(43, 36, 64, 0.05);
+  --shadow-2: 0 4px 12px rgba(43, 36, 64, 0.08);
+  --shadow-3: 0 12px 32px rgba(43, 36, 64, 0.12);
+
+  /* Curvas */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Breakpoints 390/768/1024/1280/1536 */
+  --breakpoint-xs: 390px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Cores do Tailwind apontando para os tokens. `inline` faz o utilitário usar `var(--primary)`
+   direto, então o valor resolvido é o do escopo `[data-area="app"]` acima. */
+@theme inline {
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-surface-app: var(--surface-app);
+  --color-surface-card: var(--surface-card);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-on-primary: var(--ink-on-primary);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-pastel-lavanda: var(--pastel-lavanda);
+  --color-pastel-azul: var(--pastel-azul);
+  --color-pastel-menta: var(--pastel-menta);
+  --color-pastel-rosa: var(--pastel-rosa);
+  --color-pastel-creme: var(--pastel-creme);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-status-fresh: var(--status-fresh);
+  --color-status-warm: var(--status-warm);
+  --color-status-cold: var(--status-cold);
+}
