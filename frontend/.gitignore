@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# builds de comparação e relatórios do Playwright
+dist-mock
+test-results
+playwright-report

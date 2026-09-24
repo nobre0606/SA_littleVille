@@ -47,7 +47,10 @@ function camposDoZod(error) {
 export function criarHandlers({ banco, cenarios }) {
   const serverTime = () => new Date(banco.agora()).toISOString()
   const cabecalhos = { 'X-Contract-Version': CONTRACT_VERSION }
-  let primeiraResposta = true
+  // Servidor "frio": dorme até 4,5 s depois da PRIMEIRA requisição que chega. Toda requisição
+  // anterior a esse horário espera até ele — inclusive a repetida pelo StrictMode depois de
+  // cancelar a primeira. (Simular "só a primeira resposta demora" falhava justamente nesse caso.)
+  let acordaEm = null
 
   const ok = (data, status = 200, extra = {}) =>
     HttpResponse.json({ data, ...extra, serverTime: serverTime() }, { status, headers: cabecalhos })
@@ -60,11 +63,11 @@ export function criarHandlers({ banco, cenarios }) {
 
   async function esperar() {
     const { latencia, frio } = cenarios.estado
-    if (frio && primeiraResposta) {
-      primeiraResposta = false
-      return delay(4500) // servidor "acordando": passa dos 3 s do ColdStartScreen
+    if (frio) {
+      acordaEm ??= Date.now() + 4500 // passa dos 3 s que ligam o ColdStartScreen
+      const falta = acordaEm - Date.now()
+      if (falta > 0) return delay(falta)
     }
-    primeiraResposta = false
     if (latencia === 'zero') return
     if (latencia === 'lenta') return delay(4000)
     return delay(400 + Math.random() * 600) // 400–1000 ms, como pede o brief
