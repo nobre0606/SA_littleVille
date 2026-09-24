@@ -2,11 +2,29 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#05080F" />
-    <link rel="preload" as="image" href="/assets/caverna-yeti.png" fetchpriority="high" />
     <title>Little Ville</title>
+    <meta name="description" content="Registre e acompanhe avistamentos do Pé Grande em Florianópolis." />
+
+    <!-- Ícones e app instalável (gerados por scripts/brand-assets.mjs a partir dos tokens) -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Cor da intro (--lv-bg). As telas do app trocam para --surface-app ao montar (AppLayout). -->
+    <meta name="theme-color" content="#05080f" />
+
+    <!-- Prévia de link (WhatsApp, redes sociais) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Little Ville" />
+    <meta property="og:description" content="Avistamentos do Pé Grande em Florianópolis." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preload" as="image" href="/assets/caverna-yeti.png" fetchpriority="high" />
   </head>
   <body>
     <div id="root"></div>
