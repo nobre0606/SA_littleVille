@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isValidCPF, sanitizeCPF } from './cpf.js'
+import { BAIRROS, BAIRRO_OUTROS, CONTRACT_VERSION, ERROR_CODES, MESSAGE_MAX, SIGHTING_SORTS, TEAM_CODE_REGEX } from './constantes.js'
 
 /**
  * Schemas zod compartilhados entre o front (Fase 4) e o back (Fase 5) — o MESMO arquivo,
@@ -67,6 +68,8 @@ export const registerStep2Schema = z.object({
 /** Schema completo (as duas etapas juntas) — o que o back (Fase 5) valida no corpo do POST. */
 export const registerSchema = registerStep1Schema.merge(registerStep2Schema)
 
+export { BAIRROS, BAIRRO_OUTROS, CONTRACT_VERSION, ERROR_CODES, MESSAGE_MAX, SIGHTING_SORTS, TEAM_CODE_REGEX }
+
 /* ==========================================================================================
  * CONTRATO DA API — versão em CONTRACT_VERSION (docs/API-CONTRACT.md é a descrição em texto; este arquivo é a
  * versão executável). O MSW do front valida cada resposta contra estes schemas nos testes de
@@ -76,8 +79,6 @@ export const registerSchema = registerStep1Schema.merge(registerStep2Schema)
  * cadastro que já existia; campos TÉCNICOS em inglês (id, createdAt, deletedAt, serverTime),
  * que é o vocabulário de qualquer API REST e o que o próprio brief usa.
  * ======================================================================================== */
-
-export const CONTRACT_VERSION = '1.1.0'
 
 /**
  * Data/hora sempre em ISO 8601 UTC com "Z" (ex.: 2026-09-24T13:05:00.000Z). `z.iso.datetime()`
@@ -96,29 +97,6 @@ export const lngSchema = z.number().min(-180, 'Longitude inválida').max(180, 'L
 export const precisaoSchema = z.number().min(0).max(100_000).nullable()
 
 // ---------------------------------------------------------------------------------- erros
-
-/**
- * Tabela ÚNICA de códigos de erro → status HTTP. O back responde com estes códigos, o mock
- * também, e o front decide o que fazer pelo `code` (nunca pela `message`, que é texto pra
- * pessoa ler e pode mudar).
- */
-export const ERROR_CODES = {
-  VALIDATION_ERROR: 400,
-  INVALID_CREDENTIALS: 401,
-  UNAUTHENTICATED: 401,
-  FORBIDDEN: 403,
-  NOT_IN_TEAM: 403,
-  NOT_FOUND: 404,
-  TEAM_CODE_NOT_FOUND: 404,
-  EMAIL_TAKEN: 409,
-  CPF_TAKEN: 409,
-  ALREADY_IN_TEAM: 409,
-  RESTORE_WINDOW_EXPIRED: 410,
-  PAYLOAD_TOO_LARGE: 413,
-  RATE_LIMITED: 429,
-  INTERNAL_ERROR: 500,
-  SERVICE_UNAVAILABLE: 503,
-}
 
 export const errorCodeSchema = z.enum(Object.keys(ERROR_CODES))
 
@@ -184,25 +162,6 @@ export const autorResumoSchema = z.object({ id: idSchema, nome: z.string().min(1
 
 export const origemLocalSchema = z.enum(['gps', 'manual'])
 
-/**
- * Lista FIXA de bairros de Florianópolis. O usuário escolhe o bairro no formulário — o
- * servidor não deduz pelas coordenadas, porque geocodificação reversa seria uma dependência
- * externa que o projeto não adotou. Mudar esta lista é mudança de contrato (sobe a versão).
- * "Outros" NÃO está aqui de propósito: é só o agrupamento do dashboard, nunca uma escolha.
- */
-export const BAIRROS = [
-  'Abraão', 'Agronômica', 'Armação', 'Balneário', 'Barra da Lagoa', 'Cachoeira do Bom Jesus',
-  'Cacupé', 'Campeche', 'Canasvieiras', 'Canto', 'Capoeiras', 'Carianos', 'Carvoeira', 'Centro',
-  'Coloninha', 'Coqueiros', 'Córrego Grande', 'Costeira do Pirajubaé', 'Daniela', 'Estreito',
-  'Ingleses', 'Itacorubi', 'Itaguaçu', 'Jardim Atlântico', 'João Paulo', 'Joaquina', 'Jurerê',
-  'Lagoa da Conceição', 'Monte Cristo', 'Monte Verde', 'Morro das Pedras', 'Pantanal',
-  'Pântano do Sul', 'Ponta das Canas', 'Ratones', 'Ribeirão da Ilha', 'Rio Tavares',
-  'Rio Vermelho', 'Saco dos Limões', 'Saco Grande', 'Sambaqui', 'Santa Mônica', 'Santinho',
-  'Santo Antônio de Lisboa', 'Tapera', 'Trindade', 'Vargem Grande', 'Vargem Pequena',
-]
-
-export const BAIRRO_OUTROS = 'Outros'
-
 export const bairroSchema = z.enum(BAIRROS, { message: 'Escolha o bairro na lista' })
 
 /**
@@ -245,8 +204,6 @@ export const sightingSchema = z.object({
    */
   acoes: z.object({ podeEditar: z.boolean(), podeExcluir: z.boolean() }),
 })
-
-export const SIGHTING_SORTS = ['-vistoEm', 'vistoEm', 'bairro', '-bairro', 'autor', '-autor']
 
 /**
  * Query string do GET /api/sightings. Tudo chega como texto na URL, por isso o `coerce` nos
@@ -307,9 +264,6 @@ export const dashboardStatsSchema = z.object({
 
 // ------------------------------------------------------------------------------ equipes
 
-/** Código de convite: 6 caracteres, sem 0/O/1/I pra não confundir quem digita. */
-export const TEAM_CODE_REGEX = /^[A-HJ-NP-Z2-9]{6}$/
-
 export const teamSchema = z.object({
   id: idSchema,
   nome: z.string().min(3).max(40),
@@ -348,8 +302,6 @@ export const teamMemberSchema = z.object({
 })
 
 // -------------------------------------------------------------------------------- chat
-
-export const MESSAGE_MAX = 500
 
 export const messageSchema = z.object({
   id: idSchema,

@@ -1,4 +1,4 @@
-import { ERROR_CODES } from 'shared/schemas'
+import { ERROR_CODES } from 'shared/constantes'
 
 /**
  * Erro único do front. Tudo que dá errado numa chamada — erro do servidor no formato do

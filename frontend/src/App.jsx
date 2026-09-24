@@ -1,6 +1,5 @@
 import { lazy, Suspense, useLayoutEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
-import SceneScreen from './pages/SceneScreen.jsx'
 import { AppLayout } from './app/AppLayout.jsx'
 import { AppShell } from './app/AppShell.jsx'
 import { Providers } from './app/Providers.jsx'
@@ -9,7 +8,13 @@ import { historicoRotas } from './app/navegacao.js'
 import { EmConstrucao } from './pages/EmConstrucao.jsx'
 import { CarregandoPegadas } from './ui/brand/Pegada.jsx'
 
-// Telas do app em pedaços separados do bundle: quem só vê a intro/login não baixa o app todo.
+/*
+ * DIVISÃO POR ROTA (orçamento de bundle — ver scripts/check-bundle.mjs e DECISOES D15):
+ * cada tela é um pedaço carregado sob demanda. A cena/intro (GSAP) não entra no app, e as telas
+ * do app (Recharts, Leaflet) não entram na intro. A entrada inicial fica só com React, roteador,
+ * cache de dados e a moldura — abaixo de 200 kB gzip, e o build falha se passar.
+ */
+const SceneScreen = lazy(() => import('./pages/SceneScreen.jsx'))
 const PermissaoLocalizacao = lazy(() => import('./pages/PermissaoLocalizacao.jsx'))
 const Perfil = lazy(() => import('./pages/Perfil.jsx'))
 const NaoEncontrado = lazy(() => import('./pages/NaoEncontrado.jsx'))
@@ -38,6 +43,13 @@ const carregandoTela = (
   </div>
 )
 
+// A cena carrega sob demanda com um fundo na cor da caverna: a intro nunca "pisca" claro.
+const cena = (
+  <Suspense fallback={<div className="h-dvh" style={{ background: 'var(--lv-bg)' }} />}>
+    <SceneScreen />
+  </Suspense>
+)
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -46,8 +58,8 @@ export default function App() {
         <Suspense fallback={carregandoTela}>
           <Routes>
             {/* Intro + login/cadastro (congelados). "/login" é o destino do 401 e do "Sair". */}
-            <Route path="/" element={<SceneScreen />} />
-            <Route path="/login" element={<SceneScreen />} />
+            <Route path="/" element={cena} />
+            <Route path="/login" element={cena} />
 
             <Route element={<AppLayout />}>
               <Route element={<RequireSession />}>

@@ -59,6 +59,9 @@ export default defineConfig(({ mode }) => {
     build: {
       // Top-level await no entry do mock (espera o MSW ligar antes do app).
       target: 'es2022',
+      // Mapa de quem importa quem (dist/.vite/manifest.json): o check-bundle usa para medir a
+      // entrada inicial e conferir que cada rota só puxa o que precisa.
+      manifest: true,
       rolldownOptions: {
         output: {
           // Bibliotecas grandes em arquivos próprios: nenhum pedaço passa de 500 kB e o cache do
@@ -70,6 +73,7 @@ export default defineConfig(({ mode }) => {
               { name: 'zod', test: /node_modules[\\/]zod[\\/]/ },
               { name: 'query', test: /node_modules[\\/]@tanstack[\\/]/ },
               { name: 'recharts', test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/ },
+              { name: 'leaflet', test: /node_modules[\\/](leaflet|react-leaflet|@react-leaflet)[\\/]/ },
             ],
           },
         },

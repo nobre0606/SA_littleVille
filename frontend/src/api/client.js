@@ -1,4 +1,4 @@
-import { CONTRACT_VERSION } from 'shared/schemas'
+import { CONTRACT_VERSION } from 'shared/constantes'
 import { relogioServidor } from './serverClock.js'
 import { erroDeRede, normalizarErro } from './errors.js'
 
