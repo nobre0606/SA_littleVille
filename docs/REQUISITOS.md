@@ -48,7 +48,7 @@ as mesmas regras.
 | **RNF02** | **Atualização < 5 s**: novas mensagens do chat aparecem em até 5 s (polling de 3 s). | Teste e2e que mede o tempo entre o envio de um usuário e a exibição para outro |
 | **RNF03** | **Acessibilidade**: contraste AA, foco visível, área de toque ≥ 44×44 px, rótulo em todo campo, cor nunca como única informação, `prefers-reduced-motion` respeitado. | `@axe-core/playwright` em todas as rotas, com zero violação |
 | **RNF04** | **Segurança no cliente**: sessão só em cookie httpOnly (nada em `localStorage`), texto de usuário sempre renderizado como texto, nenhum segredo no repositório. | Varredura no lint/CI; revisão de código |
-| **RNF05** | **Hora confiável**: toda regra de tempo usa a hora do servidor (`serverTime`), corrigindo o desvio do relógio do aparelho. | Teste unitário do cálculo de desvio e do RF04 com relógio local adulterado |
+| **RNF05** | **Hora confiável**: toda regra de tempo usa a hora do servidor. O desvio (`serverTime − Date.now()`) é medido na primeira resposta; acima de 5 min, aparece um aviso discreto ("O relógio do seu dispositivo está desajustado") e o app continua normalmente. | `serverClock.test.js` (desvio, limite de 5 min, aparelho 2 h adiantado) |
 | **RNF06** | **Desempenho percebido**: skeleton no formato do conteúdo; se a primeira chamada passar de 3 s, tela "Acordando o servidor…". Mapa com `preferCanvas` e marcadores agrupados. | Teste e2e com latência simulada |
 | **RNF07** | **Entrega publicável**: build de produção sem avisos, deploy na Vercel com `/api/*` redirecionado para a API real, instalável (manifest). | `npm run build` no CI |
 | **RNF08** | **Consistência visual**: todas as cores vêm de `theme/tokens.css`; tipografia Fredoka + Nunito Sans; ícones só do lucide. | Varredura que reprova hexadecimal fora de `tokens.css` |
@@ -59,7 +59,7 @@ as mesmas regras.
 
 | Id | Regra |
 |----|-------|
-| **RN01** | **Local obrigatório.** Um avistamento só pode ser enviado com local: a posição atual (GPS) ou um ponto marcado no mapa. Sem local, o botão fica bloqueado e o motivo aparece na tela. |
+| **RN01** | **Local obrigatório.** Um avistamento só pode ser enviado com local: a posição atual (GPS) ou um ponto marcado no mapa. O usuário também escolhe o **bairro** numa lista fixa de bairros de Florianópolis. Sem local ou sem bairro, o botão fica bloqueado e o motivo aparece na tela. A **descrição é opcional** (até 500 caracteres). |
 | **RN02** | **Hora automática.** A hora do avistamento é a do servidor no momento do registro. O usuário não digita e não edita. |
 | **RN03** | **Permissões.** Só o autor edita o próprio avistamento. O autor exclui o próprio; o Admin exclui qualquer um. O front esconde a ação não permitida, e o servidor recusa (403) se alguém tentar mesmo assim. |
 | **RN04** | **Exclusão lógica.** Excluir marca `deletedAt` em vez de apagar. O item some de listas, mapa e dashboard. O usuário pode desfazer por 10 s. |

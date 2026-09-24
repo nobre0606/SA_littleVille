@@ -20,7 +20,7 @@ Esta tabela é atualizada ao fim de cada fase. Os requisitos estão descritos em
 | RF03 Equipes | `/equipe` | contrato: `teamSchema`, `teamMemberSchema`, `teamCreateSchema`, `teamJoinSchema` | `shared/src/contract.test.js` | 🟡 contrato pronto, tela ⏳ (Fase 4) |
 | RF04 Área 1 km | `/mapa` | — | — | ⏳ (Fase 3) |
 | RF05 Chat | `/equipe` (aba Chat) | contrato: `messageSchema`, `messageCreateSchema` | `shared/src/contract.test.js` | 🟡 contrato pronto, tela ⏳ (Fase 4) |
-| RF06 Login/cadastro | `/` (intro + card) | `frontend/src/auth/*`, `shared/src/schemas.js` (`loginSchema`, `registerSchema`), `shared/src/cpf.js` | `shared/src/schemas.test.js`, `shared/src/cpf.test.js`, `frontend/src/auth/masks.test.js`, `frontend/src/auth/passwordScore.test.js`, `frontend/e2e/verify-auth-card.mjs` | 🟡 telas prontas; migrar para o envelope/erro do contrato 1.0.0 (Fase 0.5, `api/client.js`) |
+| RF06 Login/cadastro | `/` (intro + card) | `frontend/src/auth/*`, `shared/src/schemas.js` (`loginSchema`, `registerSchema`), `shared/src/cpf.js` | `shared/src/schemas.test.js`, `shared/src/cpf.test.js`, `frontend/src/auth/masks.test.js`, `frontend/src/auth/passwordScore.test.js`, `frontend/e2e/verify-auth-card.mjs` | ✅ telas **congeladas** (não mudam); o `api/client.js` converte o formato antigo de erro (`{ message, fieldErrors }`) para o do contrato |
 | RF07 CRUD avistamentos | `/avistamentos`, `/avistamentos/novo`, `/avistamentos/:id`, `/avistamentos/:id/editar` | contrato: `sightingSchema`, `sightingInputSchema`, `sightingListQuerySchema` | `shared/src/contract.test.js` | 🟡 contrato pronto, telas ⏳ (Fase 1) |
 | RF08 Dashboard | `/dashboard` | contrato: `dashboardStatsSchema` | `shared/src/contract.test.js` | 🟡 contrato pronto, tela ⏳ (Fase 2) |
 | RF09 Posição GPS | `/permissao-localizacao`, `/mapa` | `frontend/src/pages/PermissaoLocalizacao.jsx` (placeholder), contrato: `locationUpdateSchema` | `shared/src/contract.test.js` | 🟡 (Fases 3 e 5) |
@@ -34,7 +34,7 @@ Esta tabela é atualizada ao fim de cada fase. Os requisitos estão descritos em
 | RNF02 Atualização < 5 s | chat | e2e de latência | ⏳ (Fase 4) |
 | RNF03 Acessibilidade | todas as rotas | `@axe-core/playwright` | ⏳ (a partir da Fase 0.5) |
 | RNF04 Segurança no cliente | `api/client.js`, chat | cookie httpOnly definido no contrato §1.2; varredura | 🟡 contrato pronto |
-| RNF05 Hora do servidor | `api/client.js` | contrato §1.4 e `isoUtcSchema` (recusa offset) | 🟡 contrato pronto, implementação ⏳ (Fase 0.5) |
+| RNF05 Hora do servidor | `frontend/src/api/serverClock.js` | `frontend/src/api/serverClock.test.js`; `isoUtcSchema` recusa offset | 🟡 função pronta e testada; ligação no `client.js` e aviso ⏳ (Fase 0.5) |
 | RNF06 Desempenho percebido | `ColdStartScreen`, skeletons | e2e com latência | ⏳ (Fase 0.5) |
 | RNF07 Entrega publicável | `vercel.json`, build | `npm run build` | ⏳ (Fase 5) |
 | RNF08 Consistência visual | `theme/tokens.css` | varredura de hexadecimal | ⏳ (Fase 0.5) |
@@ -43,7 +43,7 @@ Esta tabela é atualizada ao fim de cada fase. Os requisitos estão descritos em
 
 | Regra | Garantida em | Teste | Status |
 |-------|--------------|-------|--------|
-| RN01 Local obrigatório | `sightingInputSchema` (`lat`/`lng` obrigatórios) | `contract.test.js`: "local obrigatório" | 🟡 schema pronto, formulário ⏳ (Fase 1) |
+| RN01 Local e bairro obrigatórios, descrição opcional | `sightingInputSchema`, `BAIRROS` | `contract.test.js`: "local e bairro obrigatórios", "descrição opcional", "só aceita bairros da lista" | 🟡 schema pronto, formulário ⏳ (Fase 1) |
 | RN02 Hora automática | `sightingInputSchema` estrito (recusa `vistoEm`) | `contract.test.js`: "cliente não consegue mandar a hora" | 🟡 schema pronto |
 | RN03 Permissões | `sightingSchema.acoes` + 403 no contrato §1.8 | `contract.test.js`: "exige permissões calculadas pelo servidor" | 🟡 schema pronto, UI ⏳ (Fase 1) |
 | RN04 Exclusão lógica | contrato §1.7 (`deletedAt`, `/restore`) | — | ⏳ mock e UI (Fases 0.5 e 1) |

@@ -68,7 +68,7 @@ export const registerStep2Schema = z.object({
 export const registerSchema = registerStep1Schema.merge(registerStep2Schema)
 
 /* ==========================================================================================
- * CONTRATO DA API — v1.0.0 (docs/API-CONTRACT.md é a descrição em texto; este arquivo é a
+ * CONTRATO DA API — versão em CONTRACT_VERSION (docs/API-CONTRACT.md é a descrição em texto; este arquivo é a
  * versão executável). O MSW do front valida cada resposta contra estes schemas nos testes de
  * contrato: se o mock e o documento divergirem, o teste reprova.
  *
@@ -77,7 +77,7 @@ export const registerSchema = registerStep1Schema.merge(registerStep2Schema)
  * que é o vocabulário de qualquer API REST e o que o próprio brief usa.
  * ======================================================================================== */
 
-export const CONTRACT_VERSION = '1.0.0'
+export const CONTRACT_VERSION = '1.1.0'
 
 /**
  * Data/hora sempre em ISO 8601 UTC com "Z" (ex.: 2026-09-24T13:05:00.000Z). `z.iso.datetime()`
@@ -185,16 +185,37 @@ export const autorResumoSchema = z.object({ id: idSchema, nome: z.string().min(1
 export const origemLocalSchema = z.enum(['gps', 'manual'])
 
 /**
+ * Lista FIXA de bairros de Florianópolis. O usuário escolhe o bairro no formulário — o
+ * servidor não deduz pelas coordenadas, porque geocodificação reversa seria uma dependência
+ * externa que o projeto não adotou. Mudar esta lista é mudança de contrato (sobe a versão).
+ * "Outros" NÃO está aqui de propósito: é só o agrupamento do dashboard, nunca uma escolha.
+ */
+export const BAIRROS = [
+  'Abraão', 'Agronômica', 'Armação', 'Balneário', 'Barra da Lagoa', 'Cachoeira do Bom Jesus',
+  'Cacupé', 'Campeche', 'Canasvieiras', 'Canto', 'Capoeiras', 'Carianos', 'Carvoeira', 'Centro',
+  'Coloninha', 'Coqueiros', 'Córrego Grande', 'Costeira do Pirajubaé', 'Daniela', 'Estreito',
+  'Ingleses', 'Itacorubi', 'Itaguaçu', 'Jardim Atlântico', 'João Paulo', 'Joaquina', 'Jurerê',
+  'Lagoa da Conceição', 'Monte Cristo', 'Monte Verde', 'Morro das Pedras', 'Pantanal',
+  'Pântano do Sul', 'Ponta das Canas', 'Ratones', 'Ribeirão da Ilha', 'Rio Tavares',
+  'Rio Vermelho', 'Saco dos Limões', 'Saco Grande', 'Sambaqui', 'Santa Mônica', 'Santinho',
+  'Santo Antônio de Lisboa', 'Tapera', 'Trindade', 'Vargem Grande', 'Vargem Pequena',
+]
+
+export const BAIRRO_OUTROS = 'Outros'
+
+export const bairroSchema = z.enum(BAIRROS, { message: 'Escolha o bairro na lista' })
+
+/**
  * Corpo de POST e PUT /api/sightings. `z.strictObject` recusa campo desconhecido — em
  * especial `vistoEm`: a hora do avistamento é SEMPRE a do servidor no momento da criação
  * (regra "hora automática"), o cliente não tem como mandá-la.
+ *
+ * Obrigatórios só local e bairro (a modelagem exige local obrigatório e hora automática). A
+ * descrição é opcional: registrar rápido, no calor do momento, vale mais que um texto longo.
  */
 export const sightingInputSchema = z.strictObject({
-  descricao: z
-    .string()
-    .trim()
-    .min(3, 'Descreva o avistamento (mínimo 3 caracteres)')
-    .max(500, 'A descrição pode ter no máximo 500 caracteres'),
+  descricao: z.string().trim().max(500, 'A descrição pode ter no máximo 500 caracteres').default(''),
+  bairro: bairroSchema,
   lat: latSchema,
   lng: lngSchema,
   origemLocal: origemLocalSchema,
@@ -204,13 +225,14 @@ export const sightingInputSchema = z.strictObject({
 export const sightingSchema = z.object({
   id: idSchema,
   autor: autorResumoSchema,
-  descricao: z.string().min(3).max(500),
+  /** Pode ser vazia (""): a descrição é opcional. */
+  descricao: z.string().max(500),
   lat: latSchema,
   lng: lngSchema,
   origemLocal: origemLocalSchema,
   precisaoM: precisaoSchema,
-  /** Preenchido pelo servidor a partir das coordenadas; null se fora de qualquer bairro conhecido. */
-  bairro: z.string().min(1).nullable(),
+  /** Escolhido pelo usuário na lista fixa BAIRROS. */
+  bairro: bairroSchema,
   /** Hora do avistamento = hora do servidor na criação. Imutável (PUT não altera). */
   vistoEm: isoUtcSchema,
   createdAt: isoUtcSchema,
@@ -274,10 +296,12 @@ export const dashboardStatsSchema = z.object({
   /** Sempre os 4 períodos, nesta ordem, mesmo zerados. */
   porPeriodo: z.array(z.object({ periodo: periodoDoDiaSchema, total: z.number().int().min(0) })).length(4),
   /** Do maior para o menor; no máximo 8 bairros + "Outros" agregando o resto. */
-  porBairro: z.array(z.object({ bairro: z.string().min(1), total: z.number().int().min(0) })).max(9),
-  /** Até 5 pontos de maior concentração (células de ~500 m), com o bairro como rótulo. */
+  porBairro: z
+    .array(z.object({ bairro: z.union([bairroSchema, z.literal(BAIRRO_OUTROS)]), total: z.number().int().min(0) }))
+    .max(9),
+  /** Até 5 pontos de maior concentração (células de ~500 m), com o bairro mais frequente como rótulo. */
   topLocais: z
-    .array(z.object({ rotulo: z.string().min(1), lat: latSchema, lng: lngSchema, total: z.number().int().min(1) }))
+    .array(z.object({ rotulo: bairroSchema, lat: latSchema, lng: lngSchema, total: z.number().int().min(1) }))
     .max(5),
 })
 

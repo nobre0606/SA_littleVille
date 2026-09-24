@@ -1,8 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  BAIRROS,
+  BAIRRO_OUTROS,
   ERROR_CODES,
   apiErrorSchema,
+  bairroSchema,
   dashboardStatsSchema,
   emergencyPlaceSchema,
   envelope,
@@ -89,8 +92,8 @@ test('userSchema/sessionSchema: papel restrito e sem dados sensíveis obrigatór
   assert.equal('cpf' in userSchema.parse({ ...USER, cpf: '11144477735' }), false)
 })
 
-test('sightingInputSchema: local obrigatório e descrição com limites', () => {
-  const ok = { descricao: '  Vi um vulto branco  ', lat: -27.6, lng: -48.5, origemLocal: 'manual' }
+test('sightingInputSchema: local e bairro obrigatórios', () => {
+  const ok = { descricao: '  Vi um vulto branco  ', bairro: 'Campeche', lat: -27.6, lng: -48.5, origemLocal: 'manual' }
   const r = sightingInputSchema.safeParse(ok)
   assert.equal(r.success, true)
   assert.equal(r.data.descricao, 'Vi um vulto branco')
@@ -99,14 +102,31 @@ test('sightingInputSchema: local obrigatório e descrição com limites', () => 
   const { lat: _lat, ...semLat } = ok
   assert.equal(sightingInputSchema.safeParse(semLat).success, false)
   assert.equal(sightingInputSchema.safeParse({ ...ok, lat: 91 }).success, false)
-  assert.equal(sightingInputSchema.safeParse({ ...ok, descricao: 'ab' }).success, false)
-  assert.equal(sightingInputSchema.safeParse({ ...ok, descricao: 'x'.repeat(501) }).success, false)
-  assert.equal(sightingInputSchema.safeParse({ ...ok, descricao: 'x'.repeat(500) }).success, true)
+  const { bairro: _bairro, ...semBairro } = ok
+  assert.equal(sightingInputSchema.safeParse(semBairro).success, false)
+})
+
+test('sightingInputSchema: descrição opcional, de 0 a 500 caracteres', () => {
+  const base = { bairro: 'Campeche', lat: -27.6, lng: -48.5, origemLocal: 'gps' }
+  assert.equal(sightingInputSchema.parse(base).descricao, '') // ausente vira ""
+  assert.equal(sightingInputSchema.parse({ ...base, descricao: '   ' }).descricao, '')
+  assert.equal(sightingInputSchema.safeParse({ ...base, descricao: 'ok' }).success, true)
+  assert.equal(sightingInputSchema.safeParse({ ...base, descricao: 'x'.repeat(500) }).success, true)
+  assert.equal(sightingInputSchema.safeParse({ ...base, descricao: 'x'.repeat(501) }).success, false)
+})
+
+test('bairroSchema: só aceita bairros da lista fixa; "Outros" não é escolha', () => {
+  assert.equal(BAIRROS.length, new Set(BAIRROS).size, 'lista sem duplicatas')
+  assert.equal(bairroSchema.safeParse('Lagoa da Conceição').success, true)
+  assert.equal(bairroSchema.safeParse('lagoa da conceição').success, false)
+  assert.equal(bairroSchema.safeParse('Bairro Inventado').success, false)
+  assert.equal(bairroSchema.safeParse(BAIRRO_OUTROS).success, false)
 })
 
 test('sightingInputSchema: cliente não consegue mandar a hora (hora automática)', () => {
   const r = sightingInputSchema.safeParse({
     descricao: 'Vi um vulto branco',
+    bairro: 'Campeche',
     lat: -27.6,
     lng: -48.5,
     origemLocal: 'gps',
@@ -119,6 +139,11 @@ test('sightingSchema: exige permissões calculadas pelo servidor', () => {
   assert.equal(sightingSchema.safeParse(SIGHTING).success, true)
   const { acoes: _acoes, ...semAcoes } = SIGHTING
   assert.equal(sightingSchema.safeParse(semAcoes).success, false)
+})
+
+test('sightingSchema: descrição pode vir vazia, bairro não pode ser nulo', () => {
+  assert.equal(sightingSchema.safeParse({ ...SIGHTING, descricao: '' }).success, true)
+  assert.equal(sightingSchema.safeParse({ ...SIGHTING, bairro: null }).success, false)
 })
 
 test('sightingListQuerySchema: converte texto da URL e aplica padrões', () => {
@@ -146,10 +171,14 @@ test('dashboardStatsSchema: série de 30 dias e 4 períodos, sempre completos', 
       { periodo: 'tarde', total: 11 },
       { periodo: 'noite', total: 9 },
     ],
-    porBairro: [{ bairro: 'Lagoa da Conceição', total: 7 }],
+    porBairro: [
+      { bairro: 'Lagoa da Conceição', total: 7 },
+      { bairro: 'Outros', total: 3 },
+    ],
     topLocais: [{ rotulo: 'Joaquina', lat: -27.63, lng: -48.45, total: 5 }],
   }
   assert.equal(dashboardStatsSchema.safeParse(stats).success, true)
+  assert.equal(dashboardStatsSchema.safeParse({ ...stats, porBairro: [{ bairro: 'Atlântida', total: 1 }] }).success, false)
   assert.equal(dashboardStatsSchema.safeParse({ ...stats, seriePorDia: zeros30.slice(1) }).success, false)
   assert.equal(dashboardStatsSchema.safeParse({ ...stats, porPeriodo: stats.porPeriodo.slice(1) }).success, false)
   assert.equal(

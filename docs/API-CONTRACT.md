@@ -1,6 +1,6 @@
 # Contrato da API — Little Ville
 
-**Versão atual: 1.0.0**
+**Versão atual: 1.1.0**
 
 Este documento descreve cada rota que o front consome. A versão executável dele é
 [`shared/src/schemas.js`](../shared/src/schemas.js): os mesmos schemas zod validam as respostas do
@@ -10,6 +10,7 @@ mock (MSW) nos testes de contrato. Se o documento, o schema e o mock divergirem,
 
 | Versão | Data       | Mudança |
 |--------|------------|---------|
+| 1.1.0  | 2026-09-24 | **Avistamento:** `descricao` passa a ser **opcional** (0–500 caracteres; ausente vira `""`). `bairro` passa a ser **escolhido pelo usuário** numa lista fixa (§4.1), obrigatório no POST/PUT e nunca nulo na resposta; o servidor não deduz mais o bairro pelas coordenadas. **Dashboard:** `porBairro[].bairro` e `topLocais[].rotulo` só usam valores da lista (mais `"Outros"` no `porBairro`). **Relógio (§1.4):** o desvio é medido uma única vez, na primeira resposta, com `serverTime − Date.now()`; acima de 5 min o front mostra um aviso discreto. Nenhum cliente consumia a 1.0.0, por isso é MINOR. |
 | 1.0.0  | 2026-09-24 | Primeira versão: auth, CRUD de avistamentos (com restauração), dashboard, equipes, chat, locais de emergência e posição do usuário. Formato único de erro e `serverTime` em toda resposta. |
 
 ### Política de versão (semver)
@@ -74,20 +75,29 @@ com milissegundos, no instante em que a resposta foi montada.
 
 O relógio do aparelho pode estar errado, seja por fuso mal configurado ou por ajuste manual. Por
 isso, nenhuma regra de tempo do front (idade da área no RF04, "há 40 min", "ativos agora") usa
-`Date.now()` puro. O front calcula o desvio assim:
+`Date.now()` puro.
+
+**Regra do desvio:**
 
 ```
-t0 = Date.now()                  // antes de enviar
-… resposta chega …
-t1 = Date.now()                  // ao receber
-meio = (t0 + t1) / 2             // estimativa de quando o servidor respondeu
-desvio = Date.parse(serverTime) - meio
-agoraServidor() = Date.now() + desvio
+na PRIMEIRA resposta da API:
+  offset = Date.parse(serverTime) − Date.now()
+
+em toda regra de tempo:
+  agoraServidor() = Date.now() + offset
 ```
 
-Usar o ponto médio compensa metade da latência de ida e volta. O desvio é atualizado a cada
-resposta e suavizado: amostras cuja ida e volta passou de 3 s são descartadas, porque a estimativa
-fica imprecisa demais.
+1. **Medido uma vez só.** As respostas seguintes não mudam o `offset`. Se ele mudasse a cada
+   chamada, uma área na fronteira entre duas faixas do RF04 poderia trocar de faixa sem motivo.
+2. **A latência da rede entra como erro.** Fica tipicamente abaixo de 1 s, o que não importa
+   para faixas de 1 h e 2 h nem para textos como "há 40 min".
+3. **Aviso de relógio desajustado.** Se `|offset| > 5 min`, o front mostra um aviso discreto e
+   não bloqueante: *"O relógio do seu dispositivo está desajustado"*. O app continua funcionando
+   normalmente, porque já usa a hora do servidor.
+4. **Antes da primeira resposta,** `offset = 0`. Nenhuma tela com regra de tempo tem dados antes
+   dessa resposta, então isso não afeta nada.
+
+Implementação e testes: `frontend/src/api/serverClock.js` e `serverClock.test.js`.
 
 ### 1.5 Datas
 
@@ -144,7 +154,7 @@ fica imprecisa demais.
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Confira os campos destacados.",
-    "fields": { "descricao": "Descreva o avistamento (mínimo 3 caracteres)" }
+    "fields": { "bairro": "Escolha o bairro na lista" }
   },
   "serverTime": "2026-09-24T13:05:00.000Z"
 }
@@ -254,14 +264,33 @@ Falha de rede (sem resposta HTTP) não tem `code` do servidor. O cliente cria lo
 
 | Campo | Regra |
 |-------|-------|
-| `descricao` | 3–500 caracteres, espaços nas pontas removidos. Texto puro. |
+| `descricao` | **Opcional**, de 0 a 500 caracteres, com os espaços nas pontas removidos. Se não vier, vira `""`. Texto puro. |
+| `bairro` | **Obrigatório**, escolhido pelo usuário na lista fixa (§4.1). Nunca é `null`. |
 | `lat`, `lng` | Obrigatórios (local obrigatório). |
 | `origemLocal` | `gps` (posição atual) ou `manual` (toque no mapa). |
 | `precisaoM` | Precisão do GPS em metros; `null` quando manual. |
-| `bairro` | Definido **pelo servidor** a partir das coordenadas; `null` fora de bairros conhecidos. |
 | `vistoEm` | **Hora do servidor na criação.** O cliente não envia (o schema recusa) e o PUT não altera. |
 | `deletedAt` | `null`, exceto na resposta do DELETE (§1.7). |
 | `acoes` | Permissões do usuário da sessão (§1.8). |
+
+### 4.1 Lista fixa de bairros
+
+O servidor **não** deduz o bairro pelas coordenadas: isso exigiria geocodificação reversa, uma
+dependência externa que o projeto não adotou. O usuário escolhe na lista abaixo. A fonte da
+verdade é `BAIRROS` em `shared/src/schemas.js`, e qualquer mudança nela sobe a versão do contrato.
+
+> Abraão · Agronômica · Armação · Balneário · Barra da Lagoa · Cachoeira do Bom Jesus · Cacupé ·
+> Campeche · Canasvieiras · Canto · Capoeiras · Carianos · Carvoeira · Centro · Coloninha ·
+> Coqueiros · Córrego Grande · Costeira do Pirajubaé · Daniela · Estreito · Ingleses · Itacorubi ·
+> Itaguaçu · Jardim Atlântico · João Paulo · Joaquina · Jurerê · Lagoa da Conceição · Monte Cristo ·
+> Monte Verde · Morro das Pedras · Pantanal · Pântano do Sul · Ponta das Canas · Ratones ·
+> Ribeirão da Ilha · Rio Tavares · Rio Vermelho · Saco dos Limões · Saco Grande · Sambaqui ·
+> Santa Mônica · Santinho · Santo Antônio de Lisboa · Tapera · Trindade · Vargem Grande ·
+> Vargem Pequena
+
+- A grafia é exata, com acentos e maiúsculas. Qualquer valor fora da lista gera `400
+  VALIDATION_ERROR` com `fields.bairro`.
+- `"Outros"` **não** é uma escolha válida: existe só como agrupamento em `porBairro` no dashboard.
 
 ### `GET /api/sightings` 🔒
 
@@ -288,13 +317,14 @@ Falha de rede (sem resposta HTTP) não tem `code` do servidor. O cliente cria lo
 - **Corpo** (`sightingInputSchema`, campos extras recusados):
 
   ```json
-  { "descricao": "Vulto branco atravessando a trilha.", "lat": -27.5954, "lng": -48.5480,
-    "origemLocal": "gps", "precisaoM": 18 }
+  { "descricao": "Vulto branco atravessando a trilha.", "bairro": "Córrego Grande",
+    "lat": -27.5954, "lng": -48.5080, "origemLocal": "gps", "precisaoM": 18 }
   ```
 
+  O mínimo aceito é `{ "bairro": "Campeche", "lat": -27.67, "lng": -48.48, "origemLocal": "manual" }`.
 - **201**: `{ data: Sighting, serverTime }`, com o cabeçalho `Location: /api/sightings/:id`.
-- **Erros**: 400 `VALIDATION_ERROR` (sem local, descrição fora do limite, ou campo extra como
-  `vistoEm`), 401, 413.
+- **Erros**: 400 `VALIDATION_ERROR` (sem local, sem bairro, bairro fora da lista, descrição acima
+  de 500 caracteres, ou campo extra como `vistoEm`), 401, 413.
 
 ### `PUT /api/sightings/:id` 🔒
 
@@ -354,8 +384,8 @@ fuso `America/Sao_Paulo`. Excluídos não entram na conta.
 | `minhaContribuicao` | Avistamentos do usuário da sessão e a fatia do total (%, arredondada; 0 quando o total é 0). |
 | `seriePorDia` | **Exatamente 30** dias, do mais antigo até hoje, com os dias zerados incluídos. |
 | `porPeriodo` | **Sempre os 4**, nesta ordem: madrugada 00–06 h, manhã 06–12 h, tarde 12–18 h, noite 18–24 h. |
-| `porBairro` | Decrescente; até 8 bairros mais um item `"Outros"` agregando o resto. Sem bairro conta como `"Outros"`. |
-| `topLocais` | Até 5 células de cerca de 500 m (grade de 0,005°) com mais avistamentos; `lat`/`lng` no centro da célula; `rotulo` é o bairro dominante. |
+| `porBairro` | Decrescente; até 8 bairros da lista (§4.1) mais um item `"Outros"` agregando o resto. `"Outros"` só aparece quando há mais de 8 bairros com avistamentos. |
+| `topLocais` | Até 5 células de cerca de 500 m (grade de 0,005°) com mais avistamentos; `lat`/`lng` no centro da célula; `rotulo` é o bairro mais escolhido nos avistamentos da célula. |
 
 - **Erros**: 401.
 
