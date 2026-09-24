@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, LocateFixed, MapPin } from 'lucide-react'
+import { consumirRetorno, temRetorno } from '../app/rotaDeRetorno.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { Botao } from '../ui/Botao.jsx'
 import { MascotState } from '../ui/mascot/MascotState.jsx'
@@ -16,8 +17,10 @@ export default function PermissaoLocalizacao() {
   useDocumentTitle('Localização')
   const navigate = useNavigate()
   const [status, setStatus] = useState('inicial') // inicial | pedindo | negado
+  // Veio de uma sessão que caiu? Então, depois daqui, volta para onde estava (rotaDeRetorno.js).
+  const [voltaDepois] = useState(temRetorno)
 
-  const continuar = () => navigate('/dashboard', { replace: true })
+  const continuar = () => navigate(consumirRetorno() ?? '/dashboard', { replace: true })
 
   const pedirPermissao = () => {
     if (!('geolocation' in navigator)) {
@@ -42,6 +45,7 @@ export default function PermissaoLocalizacao() {
               ? 'Você pode usar o Little Ville normalmente. Ao registrar um avistamento, é só tocar no mapa para marcar o local. Se mudar de ideia, libere a localização nas configurações do navegador.'
               : 'Usamos sua localização para marcar avistamentos com um toque e mostrar sua posição para a sua equipe. Ela só é enviada enquanto a tela do mapa estiver aberta.'}
           </p>
+          {voltaDepois && <p className="text-14 font-semibold text-ink-1">Depois disso, você volta para onde estava.</p>}
         </div>
         <div className="flex w-full flex-col gap-3">
           {negado ? (

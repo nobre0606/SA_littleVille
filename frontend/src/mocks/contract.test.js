@@ -43,7 +43,7 @@ after(() => server.close())
 beforeEach(() => {
   agora = Date.parse('2026-09-24T13:00:00.000Z')
   banco = criarBanco({ agora: () => agora })
-  cenarios = criarCenarios({ latencia: 'zero' })
+  cenarios = criarCenarios({ latencia: 'zero', sessao: 'ativa' })
   server.resetHandlers(...criarHandlers({ banco, cenarios }))
 })
 

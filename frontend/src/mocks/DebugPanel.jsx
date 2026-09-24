@@ -1,5 +1,5 @@
 import { useState, useSyncExternalStore } from 'react'
-import { Bug, RotateCcw, ShieldCheck, UserX, Users, X } from 'lucide-react'
+import { Bug, LogIn, RotateCcw, ShieldCheck, UserX, Users, X } from 'lucide-react'
 import { Botao } from '../ui/Botao.jsx'
 import { Select } from '../ui/Select.jsx'
 import { ERROS_FORCADOS, LATENCIAS } from './cenarios.js'
@@ -73,7 +73,7 @@ export function Painel({ banco, cenarios }) {
 
       <div className="flex flex-col gap-2">
         <p className="text-14 text-ink-2">
-          Logado como <strong className="text-ink-1">{usuario?.nome}</strong> ({usuario?.papel})
+          Sessão: <strong className="text-ink-1">{estado.sessao === 'ativa' ? 'ativa' : 'deslogado'}</strong> · {usuario?.nome} ({usuario?.papel})
         </p>
         <Botao
           variante="secundario"
@@ -95,15 +95,21 @@ export function Painel({ banco, cenarios }) {
         >
           Tirar da equipe
         </Botao>
-        <Botao variante="secundario" icone={UserX} onClick={() => alterar({ sessao: 'encerrada' })}>
-          Expirar sessão
-        </Botao>
+        {estado.sessao === 'ativa' ? (
+          <Botao variante="secundario" icone={UserX} onClick={() => alterar({ sessao: 'encerrada' })}>
+            Expirar sessão
+          </Botao>
+        ) : (
+          <Botao variante="secundario" icone={LogIn} onClick={() => alterar({ sessao: 'ativa' })}>
+            Entrar (simular login)
+          </Botao>
+        )}
         <Botao
           variante="fantasma"
           icone={RotateCcw}
           onClick={() => {
             banco.reiniciar()
-            alterar({ erro: null, vazio: false, latencia: 'normal', sessao: 'ativa' })
+            alterar({ erro: null, vazio: false, latencia: 'normal' })
           }}
         >
           Reiniciar dados

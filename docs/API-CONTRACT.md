@@ -277,7 +277,7 @@ Falha de rede (sem resposta HTTP) não tem `code` do servidor. O cliente cria lo
 
 O servidor **não** deduz o bairro pelas coordenadas: isso exigiria geocodificação reversa, uma
 dependência externa que o projeto não adotou. O usuário escolhe na lista abaixo. A fonte da
-verdade é `BAIRROS` em `shared/src/schemas.js`, e qualquer mudança nela sobe a versão do contrato.
+verdade é `BAIRROS` em `shared/src/constantes.js` (reexportado por `schemas.js`), e qualquer mudança nela sobe a versão do contrato.
 
 > Abraão · Agronômica · Armação · Balneário · Barra da Lagoa · Cachoeira do Bom Jesus · Cacupé ·
 > Campeche · Canasvieiras · Canto · Capoeiras · Carianos · Carvoeira · Centro · Coloninha ·

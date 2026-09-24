@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { abrir } from './apoio.js'
+import { abrir, logado } from './apoio.js'
 
 /**
  * Estados de borda (definição de pronto, item 7), acionados pelo painel de debug do mock
@@ -12,7 +12,7 @@ async function painel(page) {
 }
 
 test('carregando: servidor frio mostra "Acordando o servidor..." e depois o app', async ({ page }) => {
-  await page.goto('/dashboard?frio=1')
+  await page.goto(logado('/dashboard?frio=1'))
   // A tela aparece 3 s depois da PRIMEIRA requisição — e, com vários testes em paralelo, o
   // servidor de desenvolvimento pode levar alguns segundos só para entregar os módulos. Os
   // prazos contam a partir do goto, por isso folgados.
@@ -52,7 +52,7 @@ test('sessão expirada durante o uso: próxima chamada leva ao login', async ({ 
   await abrir(page, '/perfil?debug=1')
   const p = await painel(page)
   await p.getByRole('button', { name: 'Expirar sessão' }).click()
-  await expect(page).toHaveURL(/\/login\?expirou=1$/, { timeout: 10_000 })
+  await expect(page).toHaveURL(/\/login\?expirou=1&voltar=%2Fperfil/, { timeout: 10_000 })
 })
 
 test('relógio desajustado: aviso discreto, dispensável, e o app segue funcionando', async ({ page }) => {

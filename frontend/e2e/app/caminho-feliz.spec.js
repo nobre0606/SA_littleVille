@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test'
-import { ROTAS, abrir } from './apoio.js'
+import { ROTAS, abrir, entrarPeloCard, logado } from './apoio.js'
 
 test('login pela intro → permissão de localização → dashboard, com a ponte visual', async ({ page }) => {
   await page.goto('/?seed=7')
-  await page.getByTestId('intro-skip').click()
-  await page.getByLabel('E-mail').fill('usada@example.com')
-  await page.getByLabel('Senha', { exact: true }).fill('Abcdefg1')
-  await page.getByTestId('login-submit').click()
+  await entrarPeloCard(page)
 
   await expect(page).toHaveURL(/\/permissao-localizacao$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Compartilhar sua localização?' })).toBeVisible()
@@ -56,7 +53,7 @@ test('sair: confirmação, volta para o login e o app deixa de ser o mundo claro
 })
 
 test('404 com o mascote e caminho de volta', async ({ page }) => {
-  await page.goto('/nao-existe')
+  await page.goto(logado('/nao-existe'))
   await expect(page.getByRole('heading', { level: 1, name: 'Pegadas perdidas' })).toBeVisible()
   await page.getByRole('link', { name: 'Voltar ao início' }).click()
   await expect(page).toHaveURL(/\/dashboard$/)

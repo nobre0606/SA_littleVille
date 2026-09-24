@@ -44,20 +44,42 @@ desligado no `npm run build`. Assim o servidor simulado nunca é publicado por e
 
 ## D2. Login congelado × sessão do mock
 
-**O que.** As telas de login e cadastro estão congeladas e usam o próprio mock delas
-(`auth/mockApi.js`), que não passa pelo MSW. Por isso a sessão do servidor simulado **começa
-ativa**, como a "Usuária de Teste" (`usada@example.com` / `Abcdefg1`, a mesma credencial do login
-congelado).
+**O que.** O servidor simulado **começa deslogado**, como um navegador sem cookie. Assim as
+rotas protegidas são de fato exercitadas: abrir `/dashboard` sem sessão leva ao login.
+
+- `?mock=logged-in` na URL, ou o botão "Entrar" do painel de debug, começa logado. Os e2e que
+  não são sobre login usam isso.
+- **Ponte com o login congelado.** O card de login usa o próprio mock (`auth/mockApi.js`) e não
+  passa pelo MSW, e `src/auth/` não pode mudar. Por isso `src/mocks/entry.js` observa as
+  navegações do app (`history.pushState`). Quando a navegação vai de `/` ou `/login` para
+  `/permissao-localizacao`, que só o login congelado faz depois de entrar com sucesso, a sessão
+  simulada é ativada como a "Usuária de Teste" (`usada@example.com` / `Abcdefg1`). Abrir
+  `/permissao-localizacao` direto pela barra de endereço **não** loga.
+
+**Rota de retorno.** Quando a sessão cai (401 em qualquer chamada, inclusive durante uma
+atualização em segundo plano), o app recarrega em `/login?expirou=1&voltar=<rota>`:
+
+- o `expirou=1` só aparece se já havia sessão;
+- a rota fica guardada no `sessionStorage` desta aba;
+- como o login congelado sempre vai para `/permissao-localizacao`, é **essa** tela que devolve a
+  pessoa para a rota guardada (uso único);
+- só aceita caminho interno: `//site.com` e `https://...` são recusados, o que evita
+  redirecionamento aberto (`app/rotaDeRetorno.js` e testes).
 
 **Consequências:**
 
-- "Sair" e sessão expirada (401) fazem uma **recarga completa** para `/login`. A recarga apaga
-  todo o cache em memória com dados da sessão anterior, o que é boa prática também com a API
-  real. No mock, a recarga reinicia a sessão simulada, e o login volta a funcionar.
-- **Limitação (só no mock):** digitar `/dashboard` na barra de endereço entra sem passar pelo
-  login. Com a API real, quem decide é o cookie de sessão.
+- "Sair" e sessão expirada fazem uma **recarga completa**. A recarga apaga todo o cache em memória
+  com dados da sessão anterior, o que é boa prática também com a API real.
 - Um cadastro novo feito no card congelado entra no app como "Usuária de Teste", porque o card
   não conversa com o MSW.
+
+**Como é garantida:** `mocks/cenarios.test.js` (a ponte loga só na transição certa),
+`app/rotaDeRetorno.test.js` e `e2e/app/sessao.spec.js`:
+
+- rota protegida sem sessão vai ao login e volta depois dele;
+- a sessão expira em silêncio e a revalidação em segundo plano leva ao login e depois de volta
+  à rota;
+- abrir a tela de permissão direto não loga.
 
 ## D3. O `client.js` é o único ponto de rede
 
@@ -154,27 +176,60 @@ Os valores obrigatórios da paleta foram medidos (WCAG). Três deles têm restri
 
 | Combinação | Contraste | Uso permitido |
 |---|---|---|
-| `--warning` sobre branco | **4,23:1** (abaixo de 4,5) | Só ícone, borda e texto grande. Texto de aviso usa `--ink-1`. |
+| `--warning` sobre branco | **4,23:1** (abaixo de 4,5) | Só fundo, borda e ícone. **Nunca texto.** |
 | Cor semântica sobre pastel | 3,6–3,9:1 | Só ícone. O texto do selo é `--ink-1`. |
 | `--border-strong` sobre branco | 1,7:1 | Só divisória. A borda de campo usa `--ink-3` (3,6:1 ≥ 3:1). |
 
-**Como é garantida:** axe-core em todas as rotas, no mobile e no desktop, com zero violação.
+**Tokens de texto semântico.** Para texto, cada cor semântica tem uma variante `-text`: o mesmo
+matiz, escurecido até passar 4,5:1 com folga no pior caso (branco, superfícies do app e o pastel
+do mesmo tom).
+
+| Token | Valor | Pior contraste |
+|---|---|---|
+| `--warning-text` | `#8A4F08` | 5,39:1 |
+| `--success-text` | `#297052` | 4,62:1 |
+| `--danger-text` | `#A93140` | 4,62:1 |
+| `--info-text` | `#285E96` | 4,61:1 |
+
+As cores base continuam para fundo, borda e ícone. Texto semântico (erro de campo, variação do
+StatCard) usa sempre a variante `-text`.
+
+**Como é garantida:**
+
+- **axe-core** em todas as rotas, no mobile e no desktop, com zero violação.
+- **Varredura visual** (`check-design.mjs`), que reprova:
+  - a classe `text-warning`;
+  - `color: var(--warning)`.
+
+  O ícone de aviso usa `text-icone-warning`: a mesma cor, com um nome próprio para a regra
+  distinguir ícone de texto.
 
 ## D11. Paleta dos gráficos
 
-O validador de paletas reprova a ordem obrigatória `--chart-1..6` para séries lado a lado:
+**Paleta adotada: Okabe-Ito.** Referência: Okabe, M. & Ito, K. (2008), *Color Universal Design
+(CUD): How to make figures and presentations that are friendly to colorblind people*.
 
-- roxo e azul têm ΔE 12,7 (abaixo de 15, difíceis de distinguir mesmo com visão normal);
-- `--chart-3` e `--chart-6` quase parecem cinza.
+`--chart-1..6` = `#0072B2` azul · `#E69F00` laranja · `#009E73` verde-azulado · `#CC79A7` rosa ·
+`#56B4E9` azul-céu · `#D55E00` vermelhão.
 
-**Decisão:** os três gráficos do dashboard são de **uma série só**, em `--chart-1`:
+**Validação** (script de paletas, modo claro, sobre branco):
 
-- linha por dia;
-- barras por período do dia;
-- barras horizontais por bairro, e **não pizza**, que é ruim para comparar valores próximos.
+| Check | Resultado |
+|---|---|
+| Faixa de luminosidade | passa |
+| Saturação mínima (não parece cinza) | passa |
+| Separação para visão normal (ΔE ≥ 15) | passa (pior par ΔE 15,6) |
+| Separação para daltonismo | **aviso**: rosa × verde ΔE 7,6 (deuteranopia), faixa aceita **só com codificação secundária** |
+| Contraste do traço sobre o fundo (≥ 3:1) | **aviso**: laranja 2,25 e azul-céu 2,31 exigem rótulos visíveis ou tabela |
 
-Se algum dia houver 2+ séries, elas levam legenda, rótulos diretos e a tabela equivalente, que
-já existe em todo `ChartCard`.
+A paleta anterior reprovava: roxo × azul tinham ΔE 12,7, e duas cores quase pareciam cinza.
+
+**Os dois avisos são atendidos por construção.** Todo `ChartCard` tem **legenda** quando há 2+
+séries e sempre tem a **tabela equivalente** recolhível. Por isso os gráficos **podem** ter várias
+séries.
+
+**Por bairro: barras horizontais, não pizza.** Pizza é ruim para comparar valores próximos, e
+os nomes longos de bairro cabem melhor no eixo de uma barra horizontal.
 
 ## D12. Fontes: exatamente 5 arquivos
 
@@ -207,13 +262,32 @@ Para trocar pela arte final: coloque os arquivos em `src/ui/mascot/art/` e ajust
 
 O `--pastel-creme` não é usado como fundo do mascote: é quase branco, e o mascote branco sumia.
 
-## D15. Bibliotecas grandes em arquivos próprios
+## D15. Orçamento de bundle e divisão por rota
 
-React, GSAP, zod, TanStack Query e Recharts ficam em pedaços separados do bundle
-(`codeSplitting` no `vite.config.js`). Com isso:
+**O que:**
 
-- nenhum arquivo passa de 500 kB (o build sai sem aviso);
-- mudar uma tela não invalida o cache dessas bibliotecas no navegador.
+- Cada tela é carregada sob demanda (`React.lazy`), **inclusive a cena/intro**.
+- React, GSAP, zod, TanStack Query, Recharts e Leaflet ficam em pedaços próprios
+  (`codeSplitting` no `vite.config.js`).
+- As constantes do contrato que o `client.js` usa (versão e tabela de erros) ficam em
+  `shared/src/constantes.js`, sem zod. Assim o zod não entra na entrada inicial.
+
+**Regras**, verificadas a cada `npm run build` pelo `scripts/check-bundle.mjs` a partir do
+manifesto do Vite. O build **falha** se:
+
+| Regra | Hoje (24/09/2026) |
+|---|---|
+| Entrada inicial ≤ **200 kB gzip** | **105,8 kB** (React, roteador, cache de dados, moldura) |
+| A entrada não puxa GSAP, Recharts nem Leaflet | ok |
+| A cena/intro não puxa Recharts nem Leaflet | ok (cena: +76,7 kB sob demanda, com GSAP e zod) |
+| Nenhuma tela do app puxa o GSAP da cena | ok |
+| Nenhum arquivo > 500 kB; exatamente 5 fontes woff2 | ok |
+
+O teste foi feito ao contrário também: importar o GSAP no Perfil fez o build falhar com
+"src/pages/Perfil.jsx carrega gsap (proibido)".
+
+**Por quê.** Quem abre só o login não baixa o app. Quem já está logado e abre o dashboard não
+baixa a animação da intro. E o cache das bibliotecas sobrevive a cada deploy.
 
 ---
 
