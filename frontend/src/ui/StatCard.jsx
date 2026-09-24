@@ -10,7 +10,7 @@ const PASTEL = {
   azul: { fundo: 'bg-pastel-azul', icone: 'text-info' },
   menta: { fundo: 'bg-pastel-menta', icone: 'text-success' },
   rosa: { fundo: 'bg-pastel-rosa', icone: 'text-danger' },
-  creme: { fundo: 'bg-pastel-creme', icone: 'text-warning' },
+  creme: { fundo: 'bg-pastel-creme', icone: 'text-icone-warning' },
 }
 
 const DURACAO_MS = 300
@@ -55,10 +55,10 @@ function Variacao({ pct, sentido = 'neutro', comparacao }) {
     return <p className="text-14 text-ink-2">Sem base de comparação</p>
   }
   const Icone = pct > 0 ? TrendingUp : pct < 0 ? TrendingDown : Minus
-  let cor = 'text-info'
+  let cor = 'text-info-text'
   if (sentido !== 'neutro' && pct !== 0) {
     const bom = sentido === 'subir-bom' ? pct > 0 : pct < 0
-    cor = bom ? 'text-success' : 'text-danger'
+    cor = bom ? 'text-success-text' : 'text-danger-text'
   }
   const sinal = pct > 0 ? '+' : ''
   return (

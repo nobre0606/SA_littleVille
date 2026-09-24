@@ -11,7 +11,7 @@ export function MolduraCampo({ id, rotulo, dica, erro, obrigatorio, contador, ch
         {rotulo}
         {obrigatorio && (
           <>
-            <span className="text-danger" aria-hidden="true">
+            <span className="text-danger-text" aria-hidden="true">
               {' *'}
             </span>
             <span className="sr-only"> (obrigatório)</span>
@@ -28,7 +28,7 @@ export function MolduraCampo({ id, rotulo, dica, erro, obrigatorio, contador, ch
               </p>
             )}
             {erro && (
-              <p id={`${id}-erro`} className="flex items-center gap-1 text-14 font-semibold text-danger">
+              <p id={`${id}-erro`} className="flex items-center gap-1 text-14 font-semibold text-danger-text">
                 <CircleAlert size={16} strokeWidth={1.75} aria-hidden="true" />
                 {erro}
               </p>

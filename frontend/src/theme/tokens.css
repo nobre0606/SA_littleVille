@@ -81,11 +81,14 @@
  *   ink-1 / ink-2 sobre qualquer superfície ........ ≥ 5.8  → texto
  *   ink-3 sobre branco ............................. 3.6    → só ícone, borda de campo, texto ≥ 24px
  *   primary sobre branco / primary-soft ............ 7.7 / 6.4
- *   success 5.0 · danger 5.3 · info 5.2 sobre branco → texto
- *   warning sobre branco ........................... 4.23   → NÃO serve para texto pequeno
- *                                                            (só ícone, borda e texto grande)
- *   cor semântica sobre pastel ..................... 3.6–3.9 → só ícone; texto do badge é ink-1
+ *   success/warning/danger/info (base) ............. 3.5–3.9 no pior fundo → ÍCONE, borda e fundo
+ *                                                    (warning dá 4.23 até sobre branco)
+ *   success/warning/danger/info-TEXT ............... ≥ 4.6 sobre TODAS as superfícies e sobre o
+ *                                                    pastel do mesmo tom → TEXTO (ver abaixo)
  *   border-strong sobre branco ..................... 1.7    → só divisória; borda de campo usa ink-3
+ *
+ * Regra: texto semântico usa SEMPRE a variante `-text`. A varredura (scripts/check-design.mjs)
+ * reprova `text-warning` e `color: var(--warning)`; ícone de aviso usa `text-icone-warning`.
  * ======================================================================================== */
 :root[data-area="app"],
 [data-area="app"] {
@@ -117,6 +120,15 @@
   --warning: #b4690e;
   --danger: #c2384a;
   --info: #2f6fb0;
+  /*
+   * Variantes de TEXTO: o mesmo matiz escurecido até passar 4.5:1 (com folga) no pior caso —
+   * branco, surface-app/raised/sunken e o pastel do mesmo tom. Pior contraste de cada uma:
+   * warning-text 5.39 · success-text 4.62 · danger-text 4.62 · info-text 4.61.
+   */
+  --warning-text: #8a4f08;
+  --success-text: #297052;
+  --danger-text: #a93140;
+  --info-text: #285e96;
   /* Texto sobre o botão primário/perigo: o branco da superfície (não é cor nova). */
   --ink-on-primary: var(--surface-card);
 
@@ -125,13 +137,17 @@
   --status-warm: #b4690e; /* 1–2 h   — "1–2 h"   — traço tracejado */
   --status-cold: #8a83a0; /* > 2 h   — "Antigo"  — traço pontilhado */
 
-  /* Gráficos — nesta ordem, seguras para daltonismo. As cores padrão do Recharts são proibidas. */
-  --chart-1: #5b3fa8;
-  --chart-2: #2f6fb0;
-  --chart-3: #2e7d5b;
-  --chart-4: #b4690e;
-  --chart-5: #c2384a;
-  --chart-6: #7a6a95;
+  /*
+   * Gráficos — paleta Okabe-Ito (Okabe & Ito, 2008, "Color Universal Design"), nesta ordem.
+   * Validada (docs/DECISOES.md, D11): passa em todos os checks; dois avisos exigem legenda +
+   * tabela equivalente (o ChartCard sempre tem as duas). As cores padrão do Recharts são proibidas.
+   */
+  --chart-1: #0072b2; /* azul */
+  --chart-2: #e69f00; /* laranja */
+  --chart-3: #009e73; /* verde-azulado */
+  --chart-4: #cc79a7; /* rosa-avermelhado */
+  --chart-5: #56b4e9; /* azul-céu */
+  --chart-6: #d55e00; /* vermelhão */
 
   /* Movimento — nada acima de 320 ms */
   --dur-fast: 120ms; /* hover, foco */
@@ -247,6 +263,13 @@
   --color-primary-soft: var(--primary-soft);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  /* Ícone de aviso: mesma cor do --warning, com nome próprio para a varredura distinguir
+     ícone (permitido) de texto (proibido: texto usa warning-text). */
+  --color-icone-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-success-text: var(--success-text);
+  --color-danger-text: var(--danger-text);
+  --color-info-text: var(--info-text);
   --color-danger: var(--danger);
   --color-info: var(--info);
   --color-status-fresh: var(--status-fresh);

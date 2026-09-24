@@ -7,6 +7,7 @@
  *  2. Espaçamento fora da escala 4/8/12/16/24/32/48/64/96 (p-5, gap-7, mt-[13px]...).
  *  3. Tamanho de texto ou peso de fonte fora do sistema (text-[15px], font-medium...).
  *  4. Emoji, SVG solto no JSX ou biblioteca de ícones que não seja o lucide.
+ *  5. --warning como cor de TEXTO (4.23:1 sobre branco, abaixo do AA): texto usa --warning-text.
  *
  * Arquivos CONGELADOS (cena, intro, login/cadastro) ficam de fora: são anteriores ao sistema
  * visual e não podem ser alterados.
@@ -36,6 +37,10 @@ const HEX = /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?(?:[0-9a-fA-F]{2})?\b/g
 const ESCALA = new Set(['0', '1', '2', '3', '4', '6', '8', '12', '16', '24'])
 const ESPACO = /(?<![\w-])-?(?:p|px|py|pt|pr|pb|pl|ps|pe|m|mx|my|mt|mr|mb|ml|ms|me|gap|gap-x|gap-y|space-x|space-y|inset|inset-x|inset-y|top|right|bottom|left)-(\d+(?:\.\d+)?|\[[^\]\s]+\])(?![\w.[-])/g
 const TEXTO_OU_PESO = /(?<![\w-])(?:text-\[\d[^\]]*\]|text-(?:xs|sm|base|lg|xl|[2-9]xl)|font-(?:thin|extralight|light|medium|extrabold|black))(?![\w-])/g
+// --warning dá 4.23:1 sobre branco: nunca como cor de texto. Texto usa text-warning-text;
+// ícone usa text-icone-warning (mesma cor, nome próprio). Ver tokens.css.
+const WARNING_COMO_TEXTO_JSX = /(?<![\w-])text-warning(?![\w-])/
+const WARNING_COMO_TEXTO_CSS = /(?<![\w-])color:\s*var\(--warning\)/
 const EMOJI = /\p{Extended_Pictographic}/u
 const ICONES_PROIBIDOS = /from\s+['"](react-icons|@heroicons|@mui\/icons-material|@fortawesome|phosphor-react|@tabler\/icons)/
 
@@ -59,7 +64,11 @@ for (const caminho of listar(join(RAIZ, 'src'))) {
 
   porLinha(arquivo, texto, (l, n) => {
     for (const hex of l.match(HEX) ?? []) registrar(arquivo, n, `hexadecimal fora do tokens.css: ${hex}`)
+    if (WARNING_COMO_TEXTO_CSS.test(l)) registrar(arquivo, n, '--warning como cor de texto (use --warning-text)')
     if (!ehJsx) return
+    if (WARNING_COMO_TEXTO_JSX.test(l)) {
+      registrar(arquivo, n, 'text-warning é proibido (texto: text-warning-text · ícone: text-icone-warning)')
+    }
     for (const m of l.matchAll(ESPACO)) {
       const valor = m[1]
       if (!ESCALA.has(valor)) registrar(arquivo, n, `espaçamento fora da escala: ${m[0]}`)

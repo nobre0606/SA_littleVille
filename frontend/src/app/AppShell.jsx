@@ -160,7 +160,7 @@ function AvisoRelogio() {
   if (!desajustado || dispensado) return null
   return (
     <div role="status" className="flex items-center gap-3 rounded-md border border-border bg-pastel-creme px-4 py-2 text-14 text-ink-1">
-      <Clock size={20} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-warning" />
+      <Clock size={20} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-icone-warning" />
       <p className="flex-1">
         <strong className="font-bold">O relógio do seu dispositivo está desajustado.</strong> Usamos a hora do servidor, então os
         horários do app continuam certos.

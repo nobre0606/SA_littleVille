@@ -9,7 +9,7 @@ const TONS = {
   neutro: { fundo: 'bg-surface-raised', icone: 'text-ink-2' },
   primario: { fundo: 'bg-primary-soft', icone: 'text-primary' },
   sucesso: { fundo: 'bg-pastel-menta', icone: 'text-success' },
-  aviso: { fundo: 'bg-pastel-creme border border-border', icone: 'text-warning' },
+  aviso: { fundo: 'bg-pastel-creme border border-border', icone: 'text-icone-warning' },
   perigo: { fundo: 'bg-pastel-rosa', icone: 'text-danger' },
   info: { fundo: 'bg-pastel-azul', icone: 'text-info' },
 }
