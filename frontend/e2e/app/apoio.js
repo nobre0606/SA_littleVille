@@ -1,3 +1,21 @@
+import { test as base } from '@playwright/test'
+
+// PNG 1x1 transparente: responde no lugar dos tiles do mapa.
+const TILE_VAZIO = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64')
+
+/**
+ * `test` com os tiles do mapa servidos localmente: os testes não dependem da internet nem
+ * geram tráfego no servidor do OpenStreetMap (a política de uso dele pede isso).
+ */
+export const test = base.extend({
+  page: async ({ page }, usar) => {
+    await page.route(/tile\.openstreetmap\.org|basemaps\.cartocdn\.com/, (rota) =>
+      rota.fulfill({ status: 200, contentType: 'image/png', body: TILE_VAZIO }),
+    )
+    await usar(page)
+  },
+})
+
 /** Rotas autenticadas do app e o título (h1) esperado em cada uma. */
 export const ROTAS = [
   { caminho: '/dashboard', titulo: 'Dashboard' },

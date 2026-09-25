@@ -9,7 +9,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 - 🟡 parcial
 - ⏳ pendente, com a fase prevista entre parênteses
 
-**Última atualização:** Fase 0.5 (sistema visual e infraestrutura), 2026-09-24.
+**Última atualização:** Fase 1 (CRUD de avistamentos), 2026-09-25.
 
 **Onde estão os testes** (todos em `frontend/`, exceto `shared/`):
 
@@ -29,7 +29,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 | RF04 Área 1 km | `/mapa` | `src/domain/idadeArea.js` (`corDaArea`), `BadgeIdade` | `lib.test.js`: "corDaArea…" (2 testes) | 🟡 regra pronta e testada; mapa ⏳ (Fase 3) |
 | RF05 Chat | `/equipe` | mock: `since`, `clientId`, 1 envio/s | `contract.test.js`: "chat…" | 🟡 contrato e mock prontos; tela ⏳ (Fase 4) |
 | RF06 Login/cadastro | `/`, `/login` | `src/auth/*` (**congelado**); `api/errors.js` converte o erro antigo | `caminho-feliz.spec.js`: "login pela intro → … → dashboard"; `errors.test.js`; `shared/*.test.js` | ✅ |
-| RF07 CRUD avistamentos | `/avistamentos/*` | contrato completo; mock com filtro, paginação, permissões, exclusão lógica e restauração; `SightingCard`, `Tabela`, `Paginacao`, `ConfirmDialog`, `Toast` com desfazer | `contract.test.js`: 7 testes de avistamentos | 🟡 contrato, mock e componentes prontos; telas ⏳ (Fase 1) |
+| RF07 CRUD avistamentos | `/avistamentos`, `/avistamentos/novo`, `/avistamentos/:id`, `/avistamentos/:id/editar` | `src/pages/avistamentos/{Lista,Detalhe,Formulario}.jsx`, `src/features/avistamentos/*` (filtros na URL, cache otimista, regras do formulário), `src/features/mapa/*` | `filtros.test.js`, `avistamentos.test.js`, `contract.test.js`; e2e `crud.spec.js` (13 testes: as 4 operações em < 1 min, bloqueio sem local, teclado, GPS negado, alterações não salvas, permissões, Admin, reversão otimista, filtros, vazio, mobile, não encontrado) | ✅ |
 | RF08 Dashboard | `/dashboard` | mock `GET /dashboard/stats`; `StatCard`, `ChartCard` | `contract.test.js`: "stats reage ao CRUD", "cenário vazio" | 🟡 contrato, mock e componentes prontos; tela ⏳ (Fase 2) |
 | RF09 Posição GPS | `/permissao-localizacao` | `src/pages/PermissaoLocalizacao.jsx`; mock `POST /me/location` | `caminho-feliz.spec.js` (fluxo "Agora não"); `contract.test.js` | 🟡 permissão pronta; envio a cada 30 s ⏳ (Fase 3) |
 | RF10 Perfil | `/perfil` | `src/pages/Perfil.jsx`, `app/sessao.js` | `caminho-feliz.spec.js`: "sair: confirmação…" | ✅ |
@@ -51,10 +51,10 @@ e as decisões em [DECISOES.md](DECISOES.md).
 
 | Regra | Garantida em | Teste | Status |
 |-------|--------------|-------|--------|
-| RN01 Local e bairro obrigatórios, descrição opcional | `sightingInputSchema`, `BAIRROS`, mock | `contract.test.js` (shared e mock): "local e bairro obrigatórios" | 🟡 servidor/mock prontos; formulário ⏳ (Fase 1) |
-| RN02 Hora automática | schema estrito; mock usa a hora do servidor | `contract.test.js`: "criar (hora do servidor)", "sem hora do cliente" | 🟡 formulário ⏳ (Fase 1) |
-| RN03 Permissões | `acoes` calculadas no mock; 403 | `contract.test.js`: "permissões: usuário comum… admin exclui" | 🟡 UI ⏳ (Fase 1) |
-| RN04 Exclusão lógica + desfazer | mock (`deletedAt`, `/restore`, 30 s); `Toast` com ação de 10 s | `contract.test.js`: "excluir e restaurar", "restaurar depois de 30 s" | 🟡 UI ⏳ (Fase 1) |
+| RN01 Local e bairro obrigatórios, descrição opcional | schema + `formulario.js` (`motivosDeBloqueio`) + tela | `avistamentos.test.js`; `crud.spec.js`: "sem local, o envio é bloqueado com o motivo visível" | ✅ |
+| RN02 Hora automática | schema estrito; campo "Hora" só leitura no formulário | `contract.test.js`; `crud.spec.js` (campo readonly) | ✅ |
+| RN03 Permissões | `acoes` do servidor escondem botões; edição por URL mostra "Sem permissão" | `crud.spec.js`: "permissões…", "Admin exclui…" | ✅ |
+| RN04 Exclusão lógica + desfazer | confirmação nomeando o item; toast "Desfazer" 10 s; `restaurarAvistamento` | `crud.spec.js`: "as 4 operações… + desfazer" | ✅ |
 | RN05 Uma equipe por vez | mock (`ALREADY_IN_TEAM`, liderança) | `contract.test.js`: "equipes…" | 🟡 UI ⏳ (Fase 4) |
 | RN06 Faixas RF04 | `corDaArea()` pura, com a hora do servidor | `lib.test.js` | ✅ (regra); mapa ⏳ (Fase 3) |
 | RN07 GPS após login | `PermissaoLocalizacao.jsx` (só pede no clique) | `caminho-feliz.spec.js` | ✅ |

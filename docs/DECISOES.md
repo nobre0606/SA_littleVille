@@ -289,6 +289,47 @@ O teste foi feito ao contrário também: importar o GSAP no Perfil fez o build f
 **Por quê.** Quem abre só o login não baixa o app. Quem já está logado e abre o dashboard não
 baixa a animação da intro. E o cache das bibliotecas sobrevive a cada deploy.
 
+## D16. Fundo do mapa: OpenStreetMap por padrão, CARTO opcional
+
+**O que.** O brief pedia CARTO Positron. Em 25/09/2026 foi conferido que o CARTO passou a exigir
+chave de API: sem ela, **todo** tile é a mesma imagem com a marca "API KEY REQUIRED".
+
+**Decisão:**
+
+- O servidor de tiles é configurável: `VITE_MAPA_TILES_URL` e `VITE_MAPA_TILES_ATRIBUICAO`.
+- Sem essas variáveis, o app usa o OpenStreetMap padrão (gratuito, sem chave), com um filtro CSS
+  só nos tiles (`.lv-tiles-neutros`) que o deixa claro e neutro como o Positron.
+- Para usar o Positron de verdade: criar uma conta gratuita no CARTO e colocar a URL com a chave
+  na variável. Chave de tiles é pública por natureza (vai em toda requisição do navegador).
+- A atribuição do OpenStreetMap aparece no rodapé do mapa, como a licença exige.
+- Os e2e servem os tiles localmente (`e2e/app/apoio.js`): não dependem da internet nem geram
+  tráfego no servidor do OSM.
+
+## D17. Ações otimistas: avisos nas opções do hook, não no `mutate`
+
+**Bug real achado no e2e.** No TanStack Query, callbacks passados em `mutate(dados, { onSuccess })`
+**não rodam se a tela desmontar antes da resposta**. As ações otimistas saem da tela na hora. Por
+isso sumiam:
+
+- o toast "registrado";
+- o "Revisar" quando o servidor recusa;
+- o "Desfazer" de quem exclui pela tela de detalhe.
+
+**Correção.** Os avisos ficam nas opções do próprio `useMutation`, que moram na mutação e rodam
+mesmo com a tela fechada. O desfazer virou uma função comum (`restaurarAvistamento`), chamada
+pelo botão do toast.
+
+**O ciclo otimista** (`features/avistamentos/cache.js`):
+
+1. Foto do cache.
+2. Aplica a mudança na tela.
+3. Se o servidor recusar, devolve a foto.
+4. No fim, revalida.
+
+A criação é otimista pela TELA: um cartão "Enviando…" via `useMutationState`, sem inserir o item
+no cache. Decidir em qual página e ordem o item novo entra seria recalcular no front o que o
+servidor decide.
+
 ---
 
 ## Bugs reais que os testes encontraram (Fase 0.5)
