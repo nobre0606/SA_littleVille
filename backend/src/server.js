@@ -11,7 +11,7 @@ const env = lerAmbiente()
 // Falha logo na subida se o banco não responder, com uma mensagem clara.
 await prisma.$queryRaw`SELECT 1`
 
-const app = criarApp({ corsOrigin: env.CORS_ORIGIN, producao: env.producao })
+const app = criarApp({ corsOrigin: env.CORS_ORIGIN, producao: env.producao, jwtSecret: env.JWT_SECRET, limiteLogin: env.limiteLogin })
 const servidor = app.listen(env.PORT, () => {
   console.log(`✔ API do Little Ville em http://localhost:${env.PORT}/api (${env.NODE_ENV})`)
 })

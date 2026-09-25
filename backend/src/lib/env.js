@@ -14,6 +14,10 @@ const esquema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET precisa de pelo menos 32 caracteres aleatórios'),
   CORS_ORIGIN: z.string().url('CORS_ORIGIN precisa ser uma URL (ex.: http://localhost:5173)'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  // Rate limit do login (DECISOES D22): configurável por .env, folgado em desenvolvimento
+  // (senão testar o login várias vezes seguidas trava a própria pessoa desenvolvendo).
+  LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
+  LOGIN_RATE_LIMIT_WINDOW_MIN: z.coerce.number().int().positive().default(15),
 })
 
 export function lerAmbiente(fonte = process.env) {
@@ -22,5 +26,9 @@ export function lerAmbiente(fonte = process.env) {
     const problemas = r.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n')
     throw new Error(`Configuração inválida no .env:\n${problemas}`)
   }
-  return { ...r.data, producao: r.data.NODE_ENV === 'production' }
+  return {
+    ...r.data,
+    producao: r.data.NODE_ENV === 'production',
+    limiteLogin: { maximo: r.data.LOGIN_RATE_LIMIT_MAX, janelaMs: r.data.LOGIN_RATE_LIMIT_WINDOW_MIN * 60_000 },
+  }
 }

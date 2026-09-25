@@ -4,6 +4,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { CONTRACT_VERSION } from 'shared/constantes'
 import { rotaNaoEncontrada, tratarErros } from './middleware/erros.js'
+import { criarRotas } from './routes/index.js'
 
 /**
  * Monta o app Express SEM abrir porta (quem abre é o server.js). Separado assim para os
@@ -12,7 +13,7 @@ import { rotaNaoEncontrada, tratarErros } from './middleware/erros.js'
  * Recebe a configuração por parâmetro (em vez de ler process.env aqui): o app não depende
  * do .env para existir, e os testes passam valores próprios.
  */
-export function criarApp({ corsOrigin, producao = false }) {
+export function criarApp({ corsOrigin, producao = false, jwtSecret, limiteLogin }) {
   const app = express()
 
   // Atrás de proxy (Vercel/Render) o IP real vem no X-Forwarded-For: necessário para o rate
@@ -36,7 +37,7 @@ export function criarApp({ corsOrigin, producao = false }) {
     next()
   })
 
-  // As rotas do contrato entram aqui na Fase B1 (src/routes/).
+  app.use('/api', criarRotas({ jwtSecret, producao, limiteLogin }))
 
   app.use('/api', rotaNaoEncontrada)
   app.use(rotaNaoEncontrada)
