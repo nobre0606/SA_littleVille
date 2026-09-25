@@ -9,7 +9,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 - 🟡 parcial
 - ⏳ pendente, com a fase prevista entre parênteses
 
-**Última atualização:** Fase 5 (entrega), 2026-09-25.
+**Última atualização:** Fase 4 (equipe e chat), 2026-09-25.
 
 **Onde estão os testes** (todos em `frontend/`, exceto `shared/`):
 
@@ -25,9 +25,9 @@ e as decisões em [DECISOES.md](DECISOES.md).
 |------|-------------|----------|--------|--------|
 | RF01 Mapa | `/mapa` (mapa e `?visao=lista`) | `src/pages/Mapa.jsx`, `src/features/mapa/{Camadas,MapaBase,icones,leafletCluster}.js(x)`, `src/domain/distancia.js` | `distancia.test.js`; e2e `dashboard-mapa.spec.js`: "mapa: pegadas, áreas, emergência…; lista por distância" | ✅ |
 | RF02 Emergência | `/emergencia`, painel no mapa | `src/pages/Emergencia.jsx`, `src/features/mapa/PainelEmergencia.jsx` (tel:) | e2e: "emergência: locais agrupados…", painel com `tel:192` no teste do mapa | ✅ |
-| RF03 Equipes | `/equipe` | mock: criar, entrar, sair, membros e liderança; `TeamCodeBox` | `contract.test.js`: "equipes…", "líder sai…" | 🟡 contrato e mock prontos; tela ⏳ (Fase 4) |
+| RF03 Equipes | `/equipe` | `src/pages/Equipe.jsx` (criar, entrar por código, membros, sair com confirmação), `src/features/equipe/consultas.js`, `TeamCodeBox` | `contract.test.js` (regras no mock); e2e `equipe.spec.js`: "criar equipe, entrar por código…" | ✅ |
 | RF04 Área 1 km | `/mapa`, detalhe | `corDaArea` + `CamadaAreas` (canvas, `memo` por faixa, timer de 60 s com hora do servidor) + legenda com traço | `lib.test.js`; e2e do mapa (legenda) | ✅ |
-| RF05 Chat | `/equipe` | mock: `since`, `clientId`, 1 envio/s | `contract.test.js`: "chat…" | 🟡 contrato e mock prontos; tela ⏳ (Fase 4) |
+| RF05 Chat | `/equipe` | `src/features/chat/{transporte,useChat,mensagens,Chat}.js(x)` (polling `?since=` 3 s/10 s, envio otimista, agrupamento por autor e dia, rolagem só no fim) | `chat.test.js` (ritmo do polling, mescla, agrupamento); e2e: "…enviar e receber mensagem em menos de 5 s" | ✅ |
 | RF06 Login/cadastro | `/`, `/login` | `src/auth/*` (**congelado**); `api/errors.js` converte o erro antigo | `caminho-feliz.spec.js`: "login pela intro → … → dashboard"; `errors.test.js`; `shared/*.test.js` | ✅ |
 | RF07 CRUD avistamentos | `/avistamentos`, `/avistamentos/novo`, `/avistamentos/:id`, `/avistamentos/:id/editar` | `src/pages/avistamentos/{Lista,Detalhe,Formulario}.jsx`, `src/features/avistamentos/*` (filtros na URL, cache otimista, regras do formulário), `src/features/mapa/*` | `filtros.test.js`, `avistamentos.test.js`, `contract.test.js`; e2e `crud.spec.js` (13 testes: as 4 operações em < 1 min, bloqueio sem local, teclado, GPS negado, alterações não salvas, permissões, Admin, reversão otimista, filtros, vazio, mobile, não encontrado) | ✅ |
 | RF08 Dashboard | `/dashboard` | `src/pages/Dashboard.jsx`, `src/features/dashboard/*` (Recharts; números só do servidor) | e2e: "dashboard: 4 indicadores…", "dashboard reage ao CRUD" | ✅ |
@@ -39,7 +39,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 | Req. | Onde | Verificação | Status |
 |------|------|-------------|--------|
 | RNF01 Responsividade | `AppShell` (lateral ≥ 1024 px, barra inferior abaixo), `.lv-container`, `.lv-grid` | capturas em 4 tamanhos (`capturas.spec.js`); "mobile: … nenhuma rolagem lateral" | ✅ para as telas existentes |
-| RNF02 Atualização < 5 s | chat | e2e de latência | ⏳ (Fase 4) |
+| RNF02 Atualização < 5 s | chat (`transporte.js`) | e2e `equipe.spec.js` mede a chegada de mensagem de outro membro (< 5 s); `chat.test.js` (3 s ativo, 10 s parado, nada com aba oculta) | ✅ |
 | RNF03 Acessibilidade | todas as rotas | `acessibilidade.spec.js`: axe em 9 rotas × 2 tamanhos, zero violação; área de toque ≥ 44 px; foco inicial nos diálogos | ✅ para as telas existentes |
 | RNF04 Segurança no cliente | `api/client.js` (cookie httpOnly), ESLint | lint reprova `fetch` fora do client e `dangerouslySetInnerHTML`; `contract.test.js`: "texto puro" | ✅ (histórico varrido em 25/09/2026: nenhum `.env` nem segredo commitado) |
 | RNF05 Hora do servidor | `api/serverClock.js`, `api/client.js`, aviso no `AppShell` | `serverClock.test.js` (7 testes); `estados.spec.js`: "relógio desajustado", "sem desvio relevante" | ✅ |
@@ -55,10 +55,10 @@ e as decisões em [DECISOES.md](DECISOES.md).
 | RN02 Hora automática | schema estrito; campo "Hora" só leitura no formulário | `contract.test.js`; `crud.spec.js` (campo readonly) | ✅ |
 | RN03 Permissões | `acoes` do servidor escondem botões; edição por URL mostra "Sem permissão" | `crud.spec.js`: "permissões…", "Admin exclui…" | ✅ |
 | RN04 Exclusão lógica + desfazer | confirmação nomeando o item; toast "Desfazer" 10 s; `restaurarAvistamento` | `crud.spec.js`: "as 4 operações… + desfazer" | ✅ |
-| RN05 Uma equipe por vez | mock (`ALREADY_IN_TEAM`, liderança) | `contract.test.js`: "equipes…" | 🟡 UI ⏳ (Fase 4) |
+| RN05 Uma equipe por vez | servidor (`ALREADY_IN_TEAM`); tela só oferece criar/entrar sem equipe | `contract.test.js`; e2e: sai antes de criar/entrar | ✅ |
 | RN06 Faixas RF04 | `corDaArea()` pura, com a hora do servidor | `lib.test.js` | ✅ (regra); mapa ⏳ (Fase 3) |
 | RN07 GPS após login | `PermissaoLocalizacao.jsx` (só pede no clique) | `caminho-feliz.spec.js` | ✅ |
-| RN08 Chat 500 caracteres / 1 por s | schema + mock (`RATE_LIMITED`) | `contract.test.js`: "chat…" | 🟡 UI ⏳ (Fase 4) |
+| RN08 Chat 500 caracteres / 1 por s | `messageCreateSchema`, campo com `maxLength` e contador, trava de 1 s na tela + 429 no servidor | `contract.test.js`; `chat.test.js`; e2e (texto puro) | ✅ |
 | RN09 LGPD | `registerStep2Schema`; API nunca devolve CPF | `schemas.test.js`, `contract.test.js`: "CPF nunca volta" | ✅ |
 | RN10 Estatísticas no servidor | `mocks/estatisticas.js` (lado servidor); telas proibidas de calcular (DECISOES D1) | `contract.test.js`: "stats reage ao CRUD" | ✅ (servidor simulado) |
 

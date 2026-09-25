@@ -23,11 +23,13 @@ Para entrar, use o login `usada@example.com` com a senha `Abcdefg1`.
 | **Registrar** | O local é obrigatório (toque no mapa, GPS ou teclado) e a hora é automática, do servidor. Sem local, o envio fica bloqueado e o motivo aparece. |
 | **Mapa** | Áreas de 1 km que mudam com a idade do avistamento (Recente, 1–2 h, Antigo, com cor, ícone e traço). Equipe e locais de emergência no mapa. Visão em lista por distância. |
 | **Emergência** | Hospitais, polícia, bombeiros, Defesa Civil e abrigos, com botão que liga direto. |
+| **Equipe e chat** | Criar equipe, entrar por código, ver membros e posições. Chat com mensagens novas em menos de 5 s. |
 
 | | |
 |---|---|
 | ![Lista de avistamentos](docs/capturas/desktop-avistamentos.png) | ![Mapa](docs/capturas/desktop-mapa.png) |
 | ![Detalhe do avistamento](docs/capturas/desktop-detalhe.png) | ![Registrar no celular](docs/capturas/mobile-registrar.png) |
+| ![Equipe e chat](docs/capturas/desktop-equipe.png) | ![Chat no celular](docs/capturas/mobile-equipe.png) |
 
 ## Stack
 

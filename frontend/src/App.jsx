@@ -6,7 +6,6 @@ import { ErroGlobal } from './app/ErroGlobal.jsx'
 import { Providers } from './app/Providers.jsx'
 import { RequireSession } from './app/RequireSession.jsx'
 import { historicoRotas } from './app/navegacao.js'
-import { EmConstrucao } from './pages/EmConstrucao.jsx'
 import { CarregandoPegadas } from './ui/brand/Pegada.jsx'
 
 /*
@@ -21,6 +20,7 @@ const Perfil = lazy(() => import('./pages/Perfil.jsx'))
 const NaoEncontrado = lazy(() => import('./pages/NaoEncontrado.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const Mapa = lazy(() => import('./pages/Mapa.jsx'))
+const Equipe = lazy(() => import('./pages/Equipe.jsx'))
 const Emergencia = lazy(() => import('./pages/Emergencia.jsx'))
 const ListaAvistamentos = lazy(() => import('./pages/avistamentos/Lista.jsx'))
 const DetalheAvistamento = lazy(() => import('./pages/avistamentos/Detalhe.jsx'))
@@ -90,7 +90,7 @@ const roteador = createBrowserRouter(
             <Route path="/avistamentos/:id" element={<DetalheAvistamento />} />
             <Route path="/avistamentos/:id/editar" element={<FormularioAvistamento />} />
             <Route path="/mapa" element={<Mapa />} />
-            <Route path="/equipe" element={<EmConstrucao titulo="Equipe" descricao="Sua equipe e o chat." fase="Fase 4" />} />
+            <Route path="/equipe" element={<Equipe />} />
             <Route path="/emergencia" element={<Emergencia />} />
             <Route path="/perfil" element={<Perfil />} />
             {UiKit && <Route path="/ui-kit" element={<UiKit />} />}

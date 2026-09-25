@@ -21,7 +21,8 @@ export const ROTAS = [
   { caminho: '/dashboard', titulo: 'Dashboard' },
   { caminho: '/avistamentos', titulo: 'Avistamentos' },
   { caminho: '/mapa', titulo: 'Mapa' },
-  { caminho: '/equipe', titulo: 'Equipe' },
+  // Com equipe, o h1 é o nome dela; o título da aba continua "Equipe".
+  { caminho: '/equipe', titulo: 'Equipe', h1: 'Patrulha da Lagoa' },
   { caminho: '/emergencia', titulo: 'Emergência' },
   { caminho: '/perfil', titulo: 'Perfil' },
 ]

@@ -20,10 +20,10 @@ test('navegação: todos os itens abrem a tela certa, com rota ativa marcada', a
   await page.setViewportSize({ width: 1366, height: 768 })
   await abrir(page, '/dashboard')
   const nav = page.getByRole('navigation', { name: 'Principal' })
-  for (const { caminho, titulo } of ROTAS) {
+  for (const { caminho, titulo, h1 } of ROTAS) {
     await nav.getByRole('link', { name: titulo }).click()
     await expect(page).toHaveURL(new RegExp(`${caminho}$`))
-    await expect(page.getByRole('heading', { level: 1, name: titulo })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: h1 ?? titulo })).toBeVisible()
     await expect(nav.getByRole('link', { name: titulo })).toHaveAttribute('aria-current', 'page')
     await expect(page).toHaveTitle(`${titulo} · Little Ville`)
   }

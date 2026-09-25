@@ -2,7 +2,7 @@ import { TAMANHOS, abrir, test } from './apoio.js'
 
 /**
  * Capturas de tela dos 4 tamanhos exigidos (390x844, 768x1024, 1366x768, 1920x1080) em
- * e2e/out/fase-2-3/ (fora do git). Página inteira, para revisar o layout de ponta a ponta.
+ * e2e/out/fase-4/ (fora do git). Página inteira, para revisar o layout de ponta a ponta.
  */
 const TELAS = [
   '/avistamentos',
@@ -13,6 +13,7 @@ const TELAS = [
   '/mapa',
   '/mapa?visao=lista',
   '/emergencia',
+  '/equipe',
   '/perfil',
   '/permissao-localizacao',
   '/rota-inexistente',
@@ -21,13 +22,13 @@ const TELAS = [
 
 for (const tamanho of TAMANHOS) {
   test(`capturas ${tamanho.nome}`, async ({ page }) => {
-    test.setTimeout(180_000) // 12 telas de página inteira
+    test.setTimeout(180_000) // 13 telas de página inteira
     await page.setViewportSize(tamanho)
     for (const caminho of TELAS) {
       await abrir(page, caminho)
       await page.waitForTimeout(450)
       const nome = caminho.slice(1).replace(/[/?=]/g, '-') || 'raiz'
-      await page.screenshot({ path: `e2e/out/fase-2-3/${tamanho.nome}-${nome}.png`, fullPage: true })
+      await page.screenshot({ path: `e2e/out/fase-4/${tamanho.nome}-${nome}.png`, fullPage: true })
     }
   })
 }

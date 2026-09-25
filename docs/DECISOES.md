@@ -379,6 +379,48 @@ servidor simulado. Trocar para a API real é só mudar variáveis e fazer redepl
 publicar um app sem servidor. A lógica de rotas é uma função pura testada
 (`scripts/vercel-config.test.js`, que simula a escolha de rota da Vercel).
 
+## D21. Chat: polling de 3 s com recuo para 10 s
+
+**O que.** As mensagens chegam por polling com `?since=` (só o que é mais novo que a última
+recebida). O transporte fica isolado em `features/chat/transporte.js`: a tela só recebe
+"chegaram estas mensagens". Trocar por WebSocket no futuro é trocar esse arquivo.
+
+**Ritmo:**
+
+| Situação | Intervalo |
+|---|---|
+| Aba visível e alguém mexeu na tela no último minuto | **3 s** |
+| 60 s sem nenhuma interação | **10 s** |
+| Qualquer interação (toque, tecla, rolagem, foco) ou envio | busca **na hora** e volta a 3 s |
+| Aba oculta | **para**; ao voltar, busca na hora |
+
+**Por quê.** O RNF02 pede mensagem nova em menos de 5 s. Com a pessoa usando, 3 s garante isso;
+o e2e mede o tempo de chegada de uma mensagem de outro membro. Quem deixou a tela parada não
+está lendo: recuar para 10 s economiza bateria e dados móveis (menos de um terço das
+requisições), e a primeira interação já traz tudo o que chegou. Com a aba oculta, não há
+motivo para buscar.
+
+**Outros cuidados:**
+
+- Nunca há duas buscas ao mesmo tempo.
+- Erro de rede não derruba o chat: aparece "Reconectando…" e ele tenta de novo no próximo ciclo.
+- 401 no polling segue o caminho de qualquer chamada: login com rota de retorno (D2).
+- O tempo parado é medido no relógio do aparelho de propósito: mede a PESSOA, não dados do
+  servidor.
+
+**Envio:**
+
+- **Otimista.** Aparece na hora com "Enviando…". A mensagem confirmada substitui a otimista
+  pelo `clientId` que o servidor ecoa.
+- **Se o servidor recusar:** a mensagem sai da lista e o texto volta ao campo, para a pessoa
+  não perder o que escreveu.
+- **Trava de 1 envio por segundo** na tela, e o servidor também confere (429).
+- **Limite de 500 caracteres**, com contador.
+- **Texto sempre puro:** `<b>` aparece escrito, nunca vira HTML. O e2e confere.
+
+**Rolagem:** acompanha as mensagens novas só se a pessoa já estava no fim. Se ela subiu para
+ler algo antigo, aparece o botão "N mensagens novas".
+
 ---
 
 ## Bugs reais que os testes encontraram (Fase 0.5)
