@@ -57,13 +57,15 @@ Abra http://localhost:5173. Sem configurar nada, o app sobe em **modo mock**.
 
 ### Modo mock (servidor simulado)
 
-Sem back-end no ar, o **MSW** simula a API no próprio navegador. São 32 avistamentos de
-Florianópolis, 2 equipes e 10 locais de emergência, com as mesmas regras do contrato. Criar,
-editar e excluir aparece na hora em todas as telas. Recarregar a página volta ao estado inicial.
+Sem back-end no ar, o **MSW** simula a API no próprio navegador, com as mesmas regras do
+contrato. O app começa **vazio, como se ninguém nunca tivesse usado**: só a conta de login e os
+10 locais de emergência. Tudo o que for criado (avistamentos, equipe, mensagens) aparece na hora
+em todas as telas. Recarregar a página volta ao estado vazio.
 
 | Na URL | O que faz |
 |---|---|
 | `?mock=logged-in` | Já entra logado (sem passar pelo login) |
+| `?dados=exemplo` | Carrega dados de exemplo: 32 avistamentos, 2 equipes e uma conversa (usado pelos testes) |
 | `?debug=1` | Painel de debug: latência, erros forçados, dados vazios, Admin, sessão expirada |
 | `?frio=1` | Simula o servidor "acordando" (primeira resposta lenta) |
 | `?desvio=120` | Adianta o relógio do servidor em 2 h (mostra o aviso de relógio desajustado) |

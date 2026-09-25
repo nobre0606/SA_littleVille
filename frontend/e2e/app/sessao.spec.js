@@ -43,12 +43,12 @@ test('sessão expira em silêncio durante a atualização em segundo plano → l
   await page.clock.fastForward('06:00')
   await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
 
-  await expect(page).toHaveURL(/\/login\?expirou=1&voltar=%2Fperfil%3Fmock%3Dlogged-in$/, { timeout: 10_000 })
+  await expect(page).toHaveURL(/\/login\?expirou=1&voltar=%2Fperfil%3Fmock%3Dlogged-in/, { timeout: 10_000 })
 
   // Entra de novo e volta exatamente para onde estava.
   await entrarPeloCard(page)
   await page.getByRole('button', { name: 'Agora não, vou marcar no mapa' }).click()
-  await expect(page).toHaveURL(/\/perfil\?mock=logged-in$/)
+  await expect(page).toHaveURL(/\/perfil\?mock=logged-in/)
   await expect(page.getByRole('heading', { level: 1, name: 'Perfil' })).toBeVisible()
 })
 

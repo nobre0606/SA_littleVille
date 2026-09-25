@@ -18,7 +18,9 @@ const cenarios = criarCenarios(cenariosDaUrl(window.location.search))
 observarLoginCongelado(window.history, window.location, () => cenarios.alterar({ sessao: 'ativa', usuarioId: USUARIO_DEMO_ID }))
 // O "relógio do servidor" simulado pode ser deslocado (?desvio=120 → 2 h adiantado) para
 // demonstrar o aviso de relógio desajustado do contrato §1.4.
-const banco = criarBanco({ agora: () => Date.now() + cenarios.estado.desvioMs })
+// App vazio por padrão ("nunca usado"); ?dados=exemplo carrega os dados de exemplo (testes e2e).
+const exemplo = new URLSearchParams(window.location.search).get('dados') === 'exemplo'
+const banco = criarBanco({ agora: () => Date.now() + cenarios.estado.desvioMs, exemplo })
 const worker = setupWorker(...criarHandlers({ banco, cenarios }))
 
 // Esperar o worker ligar ANTES do app: senão as primeiras chamadas escapariam para a rede.

@@ -1,6 +1,13 @@
 /**
  * Dados iniciais do servidor simulado — Florianópolis.
  *
+ * PADRÃO: app VAZIO, "como se ninguém nunca tivesse usado" (gerarInicial abaixo): só a conta
+ * de login e os locais de emergência (informação pública, não uso do app). Nada de
+ * avistamentos, equipes, mensagens ou posições — tudo começa do zero na hora da apresentação.
+ *
+ * Os DADOS DE EXEMPLO (gerarSeed) só entram com `?dados=exemplo` na URL — usados pelos testes
+ * automáticos e para mostrar as telas cheias, se preciso:
+ *
  * Tudo é gerado RELATIVO ao "agora" do servidor no momento em que o mock sobe: sempre existem
  * avistamentos de 12, 35 e 52 min atrás (RF04 "Recente"), de 75 e 105 min ("1–2 h") e o resto
  * espalhado pelos últimos ~28 dias (gráfico de 30 dias do dashboard).
@@ -203,4 +210,23 @@ export function gerarSeed(agoraMs) {
   }))
 
   return { usuarios, avistamentos, equipes, membros, posicoes, mensagens, locais }
+}
+
+/**
+ * Estado inicial do servidor simulado. `exemplo: false` (padrão) = app nunca usado: só a conta
+ * de login (criada agora) e os locais de emergência.
+ */
+export function gerarInicial(agoraMs, { exemplo = false } = {}) {
+  const completo = gerarSeed(agoraMs)
+  if (exemplo) return completo
+  const demo = completo.usuarios.find((u) => u.id === USUARIO_DEMO_ID)
+  return {
+    usuarios: [{ ...demo, createdAt: new Date(agoraMs).toISOString() }],
+    avistamentos: [],
+    equipes: [],
+    membros: [],
+    posicoes: {},
+    mensagens: [],
+    locais: completo.locais,
+  }
 }

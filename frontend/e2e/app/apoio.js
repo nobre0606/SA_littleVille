@@ -38,7 +38,8 @@ export const TAMANHOS = [
  * Acrescenta `mock=logged-in` à URL: o servidor simulado começa DESLOGADO (como um navegador
  * sem cookie), então os testes que não são sobre login entram já com sessão.
  */
-export const logado = (caminho) => `${caminho}${caminho.includes('?') ? '&' : '?'}mock=logged-in`
+// + dados=exemplo: o app começa vazio ("nunca usado"); os testes pedem os dados de exemplo.
+export const logado = (caminho) => `${caminho}${caminho.includes('?') ? '&' : '?'}mock=logged-in&dados=exemplo`
 
 /** Abre uma tela do app JÁ LOGADO e espera ficar pronta (sessão conferida e h1 visível). */
 export async function abrir(page, caminho) {

@@ -1,5 +1,5 @@
 import { TEAM_CODE_REGEX } from 'shared/schemas'
-import { gerarSeed, USUARIO_DEMO_ID } from './seed.js'
+import { gerarInicial, USUARIO_DEMO_ID } from './seed.js'
 import { calcularEstatisticas } from './estatisticas.js'
 
 /**
@@ -31,8 +31,8 @@ const ALFABETO_CODIGO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // sem 0/O/1/I
 /** Minúsculas e sem acento: "Conceição" encontra "conceicao". */
 const normalizar = (s) => String(s ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 
-export function criarBanco({ agora = () => Date.now() } = {}) {
-  let s = gerarSeed(agora())
+export function criarBanco({ agora = () => Date.now(), exemplo = false } = {}) {
+  let s = gerarInicial(agora(), { exemplo })
   let seq = 1000
   const novoId = (prefixo) => `${prefixo}_${++seq}`
   const iso = () => new Date(agora()).toISOString()
@@ -299,7 +299,7 @@ export function criarBanco({ agora = () => Date.now() } = {}) {
       usuario(uid).papel = papel
     },
     reiniciar: () => {
-      s = gerarSeed(agora())
+      s = gerarInicial(agora(), { exemplo })
       ultimaMensagem.clear()
     },
     agora,
