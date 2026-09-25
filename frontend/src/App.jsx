@@ -2,6 +2,7 @@ import { lazy, Suspense, useLayoutEffect } from 'react'
 import { Outlet, Route, RouterProvider, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout.jsx'
 import { AppShell } from './app/AppShell.jsx'
+import { ErroGlobal } from './app/ErroGlobal.jsx'
 import { Providers } from './app/Providers.jsx'
 import { RequireSession } from './app/RequireSession.jsx'
 import { historicoRotas } from './app/navegacao.js'
@@ -74,7 +75,7 @@ const cena = (
  */
 const roteador = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<Raiz />}>
+    <Route element={<Raiz />} errorElement={<ErroGlobal />}>
       {/* Intro + login/cadastro (congelados). "/login" é o destino do 401 e do "Sair". */}
       <Route path="/" element={cena} />
       <Route path="/login" element={cena} />

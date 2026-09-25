@@ -13,10 +13,10 @@ import { defineConfig, globalIgnores } from 'eslint/config'
  *  3. `dangerouslySetInnerHTML` é proibido em todo lugar (texto de usuário é sempre texto).
  */
 export default defineConfig([
-  globalIgnores(['dist', 'dist-mock', 'test-results', 'playwright-report', 'public/mockServiceWorker.js', 'e2e/out']),
+  globalIgnores(['dist', 'dist-mock', '.vercel', 'test-results', 'playwright-report', 'public/mockServiceWorker.js', 'e2e/out']),
   {
     // .mjs: só os scripts novos (os de fases anteriores — diagnóstico da cena — ficam como estão).
-    files: ['**/*.{js,jsx}', 'scripts/extract-mascot.mjs', 'scripts/check-design.mjs', 'scripts/brand-assets.mjs'],
+    files: ['**/*.{js,jsx}', 'scripts/extract-mascot.mjs', 'scripts/check-design.mjs', 'scripts/brand-assets.mjs', 'scripts/vercel-config.mjs', 'scripts/vercel-build.mjs'],
     extends: [js.configs.recommended, reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: {
       globals: globals.browser,

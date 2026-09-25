@@ -13,3 +13,6 @@ frontend/e2e/out/
 .env
 .env.*
 !.env.example
+
+# pacote de deploy gerado pelo build da Vercel
+.vercel

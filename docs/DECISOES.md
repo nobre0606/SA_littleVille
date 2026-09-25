@@ -356,6 +356,29 @@ servidor decide.
 - Rótulo direto no topo/fim de cada barra (série única), tooltip em pt-BR e tabela equivalente
   recolhível em todo gráfico.
 
+## D20. Deploy na Vercel: rotas geradas no build
+
+**Problema.** O brief pedia "rewrite de `/api/*` por variável de ambiente" no `vercel.json`,
+mas esse arquivo é fixo: não lê variáveis de ambiente.
+
+**Solução.** O `vercel.json` só diz como instalar e construir. O build roda
+`scripts/vercel-build.mjs`, que monta a pasta `.vercel/output` (Build Output API v3, o formato
+oficial da Vercel) com as rotas lidas das variáveis de ambiente:
+
+1. `/api/*` → `API_URL`, quando definida. É um proxy da Vercel: o navegador vê o mesmo domínio,
+   então o cookie de sessão funciona sem CORS.
+2. Cache longo para `/assets/*` (os nomes dos arquivos têm hash).
+3. Arquivos reais (`index.html`, `mockServiceWorker.js`...).
+4. `/api/*` sem API → 404, para nunca devolver a página no lugar de uma resposta da API.
+5. Todo o resto → `index.html` (fallback da SPA: recarregar em `/dashboard` funciona).
+
+**Modo demonstração.** Enquanto não há back-end publicado, `VITE_USE_MOCK=true` publica com o
+servidor simulado. Trocar para a API real é só mudar variáveis e fazer redeploy.
+
+**Proteção.** Sem mock e sem `API_URL`, o build **falha** com uma mensagem clara, em vez de
+publicar um app sem servidor. A lógica de rotas é uma função pura testada
+(`scripts/vercel-config.test.js`, que simula a escolha de rota da Vercel).
+
 ---
 
 ## Bugs reais que os testes encontraram (Fase 0.5)

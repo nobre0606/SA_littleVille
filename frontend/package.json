@@ -10,13 +10,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "dev:lan": "vite --host",
-    "test": "node --test \"src/**/*.test.js\" && npm --prefix ../shared test",
+    "test": "node --test \"src/**/*.test.js\" \"scripts/*.test.js\" && npm --prefix ../shared test",
     "test:e2e": "playwright test",
     "check:design": "node scripts/check-design.mjs",
     "check": "npm run lint && npm test && npm run check:design && npm run build",
     "brand": "node scripts/brand-assets.mjs",
     "verify:scene": "node e2e/verify-scene.mjs",
-    "diagnose:scene": "node e2e/diagnose.mjs"
+    "diagnose:scene": "node e2e/diagnose.mjs",
+    "build:vercel": "npm run build && node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.3.0",
@@ -63,5 +64,8 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

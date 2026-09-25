@@ -9,7 +9,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 - 🟡 parcial
 - ⏳ pendente, com a fase prevista entre parênteses
 
-**Última atualização:** Fases 2 e 3 (dashboard e mapa), 2026-09-25.
+**Última atualização:** Fase 5 (entrega), 2026-09-25.
 
 **Onde estão os testes** (todos em `frontend/`, exceto `shared/`):
 
@@ -41,10 +41,10 @@ e as decisões em [DECISOES.md](DECISOES.md).
 | RNF01 Responsividade | `AppShell` (lateral ≥ 1024 px, barra inferior abaixo), `.lv-container`, `.lv-grid` | capturas em 4 tamanhos (`capturas.spec.js`); "mobile: … nenhuma rolagem lateral" | ✅ para as telas existentes |
 | RNF02 Atualização < 5 s | chat | e2e de latência | ⏳ (Fase 4) |
 | RNF03 Acessibilidade | todas as rotas | `acessibilidade.spec.js`: axe em 9 rotas × 2 tamanhos, zero violação; área de toque ≥ 44 px; foco inicial nos diálogos | ✅ para as telas existentes |
-| RNF04 Segurança no cliente | `api/client.js` (cookie httpOnly), ESLint | lint reprova `fetch` fora do client e `dangerouslySetInnerHTML`; `contract.test.js`: "texto puro" | ✅ |
+| RNF04 Segurança no cliente | `api/client.js` (cookie httpOnly), ESLint | lint reprova `fetch` fora do client e `dangerouslySetInnerHTML`; `contract.test.js`: "texto puro" | ✅ (histórico varrido em 25/09/2026: nenhum `.env` nem segredo commitado) |
 | RNF05 Hora do servidor | `api/serverClock.js`, `api/client.js`, aviso no `AppShell` | `serverClock.test.js` (7 testes); `estados.spec.js`: "relógio desajustado", "sem desvio relevante" | ✅ |
 | RNF06 Desempenho percebido | `ColdStartScreen`, `Skeleton*`, rotas com `lazy`, chunks separados | `estados.spec.js`: "servidor frio…"; `check-bundle.mjs` (nenhum arquivo > 500 kB) | ✅ |
-| RNF07 Entrega publicável | `vite.config.js`, `manifest.webmanifest`, `og-image.png` | `npm run build` sem aviso + `check-bundle.mjs` (sem mock em produção, 5 fontes) | 🟡 build pronto; `vercel.json` e README ⏳ (Fase 5) |
+| RNF07 Entrega publicável | `frontend/vercel.json`, `scripts/vercel-build.mjs` (rotas pela Build Output API: rewrite `/api/*` por `API_URL`, fallback da SPA), README com passo a passo | `scripts/vercel-config.test.js` (rotas simuladas); `npm run build` sem aviso + `check-bundle.mjs` | ✅ |
 | RNF08 Consistência visual | `theme/tokens.css` (única fonte de cor), Tailwind com escala zerada | `npm run check:design` | ✅ |
 
 ## Regras de negócio
