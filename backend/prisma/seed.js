@@ -1,7 +1,7 @@
 /**
  * Dados iniciais do banco (npm run db:seed). Pode rodar de novo: apaga tudo e recria.
  *
- * - 1 admin e 3 usuários comuns, todos com a senha Abcdefg1 (hash bcrypt cost 12).
+ * - 1 admin e 4 usuários comuns (o 4º, Felipe, é o 2º membro da equipe Vigias do Norte), todos com a senha Abcdefg1 (hash bcrypt cost 12).
  *   A "Usuária de Teste" usa a MESMA credencial do login de demonstração do front
  *   (usada@example.com), para o front funcionar igual com o mock e com a API real.
  * - 30 avistamentos em Florianópolis com horários RELATIVOS a agora: sempre há um de menos de
@@ -16,6 +16,13 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
+
+// O seed APAGA todas as tabelas antes de recriar: em produção isso destruiria os dados reais.
+// Por isso ele se recusa a rodar quando NODE_ENV=production (DECISOES D24).
+if (process.env.NODE_ENV === 'production') {
+  console.error('✖ O seed é bloqueado em produção (apaga todos os dados). Nada foi alterado.')
+  process.exit(1)
+}
 const MIN = 60 * 1000
 const DIA = 24 * 60 * MIN
 const agora = Date.now()
@@ -119,11 +126,12 @@ async function main() {
     createdAt: new Date(agora - 60 * DIA),
   })
 
-  const [teste, bruno, carla, diego] = await Promise.all([
+  const [teste, bruno, carla, diego, felipe] = await Promise.all([
     prisma.user.create({ data: pessoa('Usuária de Teste', 'usada@example.com', '111444777') }),
     prisma.user.create({ data: pessoa('Bruno Lima', 'bruno@example.com', '529982247') }),
     prisma.user.create({ data: pessoa('Carla Menezes', 'carla@example.com', '248438034', 'ADMIN') }),
     prisma.user.create({ data: pessoa('Diego Martins', 'diego@example.com', '936521840') }),
+    prisma.user.create({ data: pessoa('Felipe Costa', 'felipe@example.com', '123456789') }),
   ])
 
   // Autoria: a Usuária de Teste tem avistamentos próprios (inclusive o mais recente, para
@@ -135,7 +143,7 @@ async function main() {
     const gps = rnd() > 0.25
     const visto = haMin(idade)
     return {
-      autorId: AUTOR_FIXO[i] ?? escolher([bruno.id, diego.id]),
+      autorId: AUTOR_FIXO[i] ?? escolher([bruno.id, diego.id, felipe.id]),
       latitude: Number((lat + (rnd() - 0.5) * 0.012).toFixed(5)),
       longitude: Number((lng + (rnd() - 0.5) * 0.012).toFixed(5)),
       bairro,
@@ -163,6 +171,7 @@ async function main() {
       { teamId: lagoa.id, userId: bruno.id, entrouEm: new Date(agora - 19 * DIA) },
       { teamId: lagoa.id, userId: carla.id, entrouEm: new Date(agora - 15 * DIA) },
       { teamId: norte.id, userId: diego.id, entrouEm: new Date(agora - 12 * DIA) },
+      { teamId: norte.id, userId: felipe.id, entrouEm: new Date(agora - 11 * DIA) },
     ],
   })
 

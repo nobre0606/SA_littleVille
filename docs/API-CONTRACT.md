@@ -1,6 +1,6 @@
 # Contrato da API — Little Ville
 
-**Versão atual: 1.1.0**
+**Versão atual: 1.2.0** (ver a nota do changelog sobre a constante em `shared/`)
 
 Este documento descreve cada rota que o front consome. A versão executável dele é
 [`shared/src/schemas.js`](../shared/src/schemas.js): os mesmos schemas zod validam as respostas do
@@ -10,6 +10,7 @@ mock (MSW) nos testes de contrato. Se o documento, o schema e o mock divergirem,
 
 | Versão | Data       | Mudança |
 |--------|------------|---------|
+| 1.2.0  | 2026-09-25 | **Sessão:** o cookie `lv_session` passa a valer **1 hora** (era 7 dias). **Login:** limite de **5 tentativas erradas por 15 min**, contadas por IP + e-mail, configurável no servidor (era "5 em 5 min"). **Compatibilidade com a tela congelada:** só em `POST /auth/login` e `POST /auth/register`, o erro traz, além de `error`, os campos `message` e `fieldErrors` no topo da resposta (o front de login/cadastro não pode mudar e lê esse formato). Nada é removido: quem lê `error` continua funcionando. *Aplicado no back-end; a constante `CONTRACT_VERSION` em `shared/` e o cabeçalho `X-Contract-Version` continuam 1.1.0 até o teste do front que compara essa versão ser ajustado.* |
 | 1.1.0  | 2026-09-24 | **Avistamento:** `descricao` passa a ser **opcional** (0–500 caracteres; ausente vira `""`). `bairro` passa a ser **escolhido pelo usuário** numa lista fixa (§4.1), obrigatório no POST/PUT e nunca nulo na resposta; o servidor não deduz mais o bairro pelas coordenadas. **Dashboard:** `porBairro[].bairro` e `topLocais[].rotulo` só usam valores da lista (mais `"Outros"` no `porBairro`). **Relógio (§1.4):** o desvio é medido uma única vez, na primeira resposta, com `serverTime − Date.now()`; acima de 5 min o front mostra um aviso discreto. Nenhum cliente consumia a 1.0.0, por isso é MINOR. |
 | 1.0.0  | 2026-09-24 | Primeira versão: auth, CRUD de avistamentos (com restauração), dashboard, equipes, chat, locais de emergência e posição do usuário. Formato único de erro e `serverTime` em toda resposta. |
 
@@ -37,7 +38,7 @@ versão no cabeçalho `X-Contract-Version`, e o front avisa no console quando a 
 
 ### 1.2 Sessão
 
-- A sessão fica num cookie `lv_session` com `HttpOnly; Secure; SameSite=Lax; Path=/`, válido por 7 dias.
+- A sessão fica num cookie `lv_session` com `HttpOnly; Secure; SameSite=Lax; Path=/`, válido por **1 hora**.
 - O token **nunca** aparece no corpo de nenhuma resposta, e o front não guarda nada de sessão
   em `localStorage`/`sessionStorage`.
 - O front chama com `credentials: 'include'`.
@@ -180,7 +181,7 @@ Implementação e testes: `frontend/src/api/serverClock.js` e `serverClock.test.
 | `ALREADY_IN_TEAM` | 409 | Criar ou entrar em equipe já estando em uma | Toast explicando que é preciso sair antes |
 | `RESTORE_WINDOW_EXPIRED` | 410 | Restaurar depois de 30 s | Toast "Não foi possível desfazer" |
 | `PAYLOAD_TOO_LARGE` | 413 | Corpo acima de 16 KB | Mensagem genérica |
-| `RATE_LIMITED` | 429 | Mais de 1 mensagem/s no chat, ou 5 logins errados em 5 min | Segura o envio e mostra aviso curto |
+| `RATE_LIMITED` | 429 | Mais de 1 mensagem/s no chat, ou 5 logins errados em 15 min (por IP + e-mail) | Segura o envio e mostra aviso curto |
 | `INTERNAL_ERROR` | 500 | Falha inesperada no servidor | Estado de erro com "Tentar de novo" |
 | `SERVICE_UNAVAILABLE` | 503 | Servidor acordando (cold start) ou em manutenção | `ColdStartScreen` e nova tentativa |
 
@@ -214,6 +215,8 @@ Falha de rede (sem resposta HTTP) não tem `code` do servidor. O cliente cria lo
 - **Corpo**: `{ "email": "ana@example.com", "senha": "Abcdefg1" }`
 - **200**: `{ data: Session, serverTime }` e o cookie.
 - **Erros**: 400 `VALIDATION_ERROR`, 401 `INVALID_CREDENTIALS`, 429 `RATE_LIMITED`.
+- **Compatibilidade (v1.2.0):** neste endpoint e em `/auth/register`, todo erro traz também `message` e
+  `fieldErrors` no topo do JSON, além de `error`. Ver DECISOES D23.
 
 ### `POST /api/auth/logout` 🔒
 

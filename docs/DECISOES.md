@@ -421,6 +421,42 @@ motivo para buscar.
 **Rolagem:** acompanha as mensagens novas só se a pessoa já estava no fim. Se ela subiu para
 ler algo antigo, aparece o botão "N mensagens novas".
 
+## D22. Sessão de 1 hora e limite de tentativas de login (back-end)
+
+- **Sessão:** JWT dentro de um cookie `httpOnly` + `SameSite=Lax` (`Secure` só em produção), com **1 hora**
+  de validade. Sessão curta limita o estrago de um cookie roubado. O token **nunca** vai no corpo da
+  resposta e o front não guarda nada em `localStorage`. A cada requisição o servidor recarrega o usuário
+  do banco (papel e existência da conta valem na hora, sem confiar no que está dentro do token).
+- **Limite de login:** 5 tentativas **erradas** por 15 min, contadas por **IP + e-mail**. Errar a senha
+  de uma conta trava aquela conta naquele IP, mas outra pessoa no mesmo Wi-Fi, com outro e-mail, não é
+  afetada. Login certo não conta. Configurável por `LOGIN_RATE_LIMIT_MAX` e `LOGIN_RATE_LIMIT_WINDOW_MIN`
+  no `.env` (em desenvolvimento fica folgado: 50).
+- **Tempo de resposta do login:** com e-mail inexistente, o servidor faz a comparação de senha mesmo
+  assim, com um hash falso. Sem isso, a resposta mais rápida revelaria quais e-mails têm conta.
+
+## D23. Compatibilidade com a tela congelada (login e cadastro)
+
+A tela de login e cadastro do front não pode mudar e lê os erros no formato antigo
+`{ message, fieldErrors }`. Só em `POST /auth/login` e `POST /auth/register`, o erro sai no formato do
+contrato **e** com esses dois campos a mais, no topo. Nada do contrato é removido. Em todas as outras
+rotas o erro é o formato puro do contrato. Sem isso, uma senha errada apareceria na tela como
+"Erro inesperado" em vez de "E-mail ou senha inválidos".
+
+## D24. Seed do banco
+
+- **Bloqueado em produção** (`NODE_ENV=production`): o seed apaga todas as tabelas antes de recriar, e em
+  produção isso destruiria os dados reais.
+- Tem 5 usuários (1 admin e 4 comuns): o 4º usuário comum (Felipe) existe para a equipe "Vigias do Norte"
+  ter 2 membros, já que cada pessoa só pode estar em uma equipe (chave primária de `team_members`).
+
+## D25. Dashboard calculado no banco
+
+Todas as contas do `GET /api/dashboard/stats` são feitas pelo PostgreSQL (`count`, `FILTER`, `GROUP BY`,
+`generate_series`, funções de janela), com dias e períodos no fuso de Florianópolis. Só algumas dezenas de
+números saem do banco, nunca a lista de avistamentos. Bug real encontrado no primeiro teste: o Prisma
+manda cada `${valor}` como um parâmetro diferente, então `floor(x / $1)` no `SELECT` e no `GROUP BY` não
+eram vistos como a mesma expressão (erro 42803). A célula agora é calculada antes, numa CTE.
+
 ---
 
 ## Bugs reais que os testes encontraram (Fase 0.5)

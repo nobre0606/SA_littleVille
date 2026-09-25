@@ -40,8 +40,10 @@ Para entrar, use o login `usada@example.com` com a senha `Abcdefg1`.
 - **lucide-react** para os ícones e **@fontsource** para Fredoka e Nunito Sans, self-hosted.
 - **Playwright** e **@axe-core/playwright** para os testes e2e e de acessibilidade.
 
-Este repositório é só o **front-end**. A API segue o contrato em
-[docs/API-CONTRACT.md](docs/API-CONTRACT.md).
+- **Back-end** em `backend/`: **Node.js + Express 5**, **Prisma 6** e **PostgreSQL**, com bcryptjs, JWT em
+  cookie `httpOnly`, helmet, CORS e rate limit. Os schemas do contrato (`shared/`) são os mesmos do front.
+
+A API segue o contrato em [docs/API-CONTRACT.md](docs/API-CONTRACT.md).
 
 ## Como rodar
 
@@ -71,6 +73,69 @@ em todas as telas. Recarregar a página volta ao estado vazio.
 | `?desvio=120` | Adianta o relógio do servidor em 2 h (mostra o aviso de relógio desajustado) |
 
 Exemplo: http://localhost:5173/avistamentos?mock=logged-in&debug=1
+
+## Rodar com o back-end e o banco de verdade
+
+Sem isso o app usa o servidor simulado (modo mock, acima). Para usar a API real:
+
+**1. Banco.** Tenha o PostgreSQL rodando em `localhost:5432` e crie o banco vazio:
+
+```sql
+CREATE DATABASE little_ville;
+```
+
+(pelo pgAdmin: botão direito em **Databases → Create → Database…**, nome `little_ville`).
+
+**2. Configuração do back-end.** Em `backend/`, copie `.env.example` para `.env` e preencha:
+
+- `DATABASE_URL` com o seu usuário e senha do PostgreSQL;
+- `JWT_SECRET` com um valor aleatório longo (para gerar:
+  `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`).
+
+O `.env` nunca vai para o git.
+
+**3. Instalar, criar as tabelas e popular:**
+
+```bash
+cd shared && npm ci && cd ..
+cd backend
+npm ci
+npx prisma migrate dev      # cria as tabelas (histórico em prisma/migrations)
+npm run db:seed             # 5 usuários, 30 avistamentos, 2 equipes, chat, locais de emergência
+npm run dev                 # API em http://localhost:3333/api
+```
+
+O seed **apaga e recria** os dados, e é bloqueado com `NODE_ENV=production`. Login de teste:
+`usada@example.com` (comum), `carla@example.com` (admin), todos com a senha `Abcdefg1`.
+
+**4. Front-end apontando para a API** (em outro terminal, dentro de `frontend/`):
+
+```powershell
+# PowerShell (Windows)
+$env:VITE_USE_MOCK = "false"; $env:VITE_API_URL = "http://localhost:3333/api"; npm run dev
+```
+
+```bash
+# Git Bash / Linux / macOS
+VITE_USE_MOCK=false VITE_API_URL=http://localhost:3333/api npm run dev
+```
+
+Abra http://localhost:5173. Para não repetir a cada vez, crie `frontend/.env` com essas duas linhas.
+O CORS da API só aceita `http://localhost:5173` (`CORS_ORIGIN` no `.env` do back-end).
+
+**Conferir as tabelas no pgAdmin:** **Servers → PostgreSQL → Databases → little_ville → Schemas → public →
+Tables** (botão direito em **Tables → Refresh**), depois botão direito numa tabela → **View/Edit Data → All Rows**.
+
+**Comandos do back-end** (dentro de `backend/`):
+
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | API com recarga automática, lendo o `.env` |
+| `npm start` | API sem recarga (produção) |
+| `npx prisma migrate dev` | Cria/aplica migrações (nunca `db push`: o histórico fica versionado) |
+| `npm run db:seed` | Recria os dados de exemplo (bloqueado em produção) |
+| `npm run db:reset` | Apaga o banco, reaplica as migrações e roda o seed |
+| `npm run lint` / `npm test` | Lint e testes do esqueleto da API |
 
 ## Variáveis de ambiente
 

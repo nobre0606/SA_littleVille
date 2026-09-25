@@ -13,7 +13,12 @@ import { criarRotas } from './routes/index.js'
  * Recebe a configuração por parâmetro (em vez de ler process.env aqui): o app não depende
  * do .env para existir, e os testes passam valores próprios.
  */
-export function criarApp({ corsOrigin, producao = false, jwtSecret, limiteLogin }) {
+// Padrão do limite de login = valor de produção (DECISOES D22); o .env só o AFROUXA em dev.
+const LIMITE_LOGIN_PADRAO = { maximo: 5, janelaMs: 15 * 60 * 1000 }
+
+// jwtSecret NÃO tem valor padrão de propósito: sem ele, assinar/verificar sessão falha (seguro),
+// em vez de aceitar um segredo conhecido. O server.js sempre passa o do .env (validado, 32+ chars).
+export function criarApp({ corsOrigin, producao = false, jwtSecret, limiteLogin = LIMITE_LOGIN_PADRAO }) {
   const app = express()
 
   // Atrás de proxy (Vercel/Render) o IP real vem no X-Forwarded-For: necessário para o rate
@@ -25,7 +30,9 @@ export function criarApp({ corsOrigin, producao = false, jwtSecret, limiteLogin 
   app.use(helmet())
 
   // CORS só para a origem do front, COM credenciais (o cookie de sessão precisa ir junto).
-  app.use(cors({ origin: corsOrigin, credentials: true }))
+  // exposedHeaders: por padrão o navegador esconde cabeçalhos de resposta de outra origem; o
+  // front lê X-Contract-Version (aviso de versão incompatível) e Location (avistamento criado).
+  app.use(cors({ origin: corsOrigin, credentials: true, exposedHeaders: ['X-Contract-Version', 'Location'] }))
 
   // Limite de 16 kB no corpo (contrato: 413 acima disso) — impede enviar corpos gigantes.
   app.use(express.json({ limit: '16kb' }))

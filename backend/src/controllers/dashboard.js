@@ -52,15 +52,21 @@ export async function estatisticas(req, res) {
       FROM r GROUP BY 1 ORDER BY min(pos)`,
 
     // Células de ~500 m com mais avistamentos; rótulo = bairro mais frequente na célula.
+    // A célula é calculada ANTES (CTE) e o GROUP BY usa a coluna pronta: o Prisma manda cada
+    // ${CELULA} como um parâmetro diferente, e o PostgreSQL não reconhece "floor(x / $1)" do
+    // SELECT como a mesma expressão do GROUP BY ("$2") — dava erro 42803.
     prisma.$queryRaw`
+      WITH cel AS (
+        SELECT floor(latitude / ${CELULA}::float8)::int AS ci, floor(longitude / ${CELULA}::float8)::int AS cj, bairro
+        FROM sightings WHERE "deletedAt" IS NULL
+      )
       SELECT
-        ((floor(latitude / ${CELULA}) + 0.5) * ${CELULA})::float AS lat,
-        ((floor(longitude / ${CELULA}) + 0.5) * ${CELULA})::float AS lng,
+        ((ci + 0.5) * ${CELULA}::float8)::float8 AS lat,
+        ((cj + 0.5) * ${CELULA}::float8)::float8 AS lng,
         count(*)::int AS total,
         mode() WITHIN GROUP (ORDER BY bairro) AS rotulo
-      FROM sightings WHERE "deletedAt" IS NULL
-      GROUP BY floor(latitude / ${CELULA}), floor(longitude / ${CELULA})
-      ORDER BY total DESC LIMIT 5`,
+      FROM cel GROUP BY ci, cj
+      ORDER BY total DESC, ci, cj LIMIT 5`,
   ])
 
   const variacaoPct = resumo.anterior === 0 ? null : Math.round(((resumo.ultimos7 - resumo.anterior) / resumo.anterior) * 100)
