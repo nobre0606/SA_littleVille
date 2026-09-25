@@ -1,0 +1,166 @@
+// Banco do Little Ville, derivado de docs/API-CONTRACT.md (v1.1.0).
+//
+// Convenções:
+//  - Tabelas em snake_case plural (@@map); campos em camelCase como no contrato.
+//  - Datas em timestamptz(3): o PostgreSQL guarda o instante em UTC com milissegundos — o
+//    contrato exige ISO UTC com ms, e o `?since=` do chat compara com precisão de ms.
+//  - Ids em cuid: texto opaco (contrato §1.1), sem revelar quantos registros existem.
+//  - A conexão vem de DATABASE_URL (arquivo .env, fora do git). Nada de senha aqui.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Papel no sistema. A API devolve "usuario"/"admin" (contrato §3); aqui é o enum do banco.
+enum Papel {
+  USER
+  ADMIN
+}
+
+/// Como o local do avistamento foi marcado (contrato §4: "gps" | "manual").
+enum OrigemLocal {
+  GPS
+  MANUAL
+}
+
+/// Tipos de local de emergência (contrato §8).
+enum TipoEmergencia {
+  HOSPITAL
+  POLICIA
+  BOMBEIROS
+  DEFESA_CIVIL
+  ABRIGO
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  nome                String
+  /// Sempre salvo em minúsculas (o schema zod normaliza): "Ana@X.com" e "ana@x.com" são o mesmo.
+  email               String   @unique
+  /// Hash bcrypt (cost 12). A senha em si nunca é guardada.
+  senhaHash           String
+  /// Só os 11 dígitos, sem máscara.
+  cpf                 String   @unique @db.Char(11)
+  /// Só dígitos (10 ou 11).
+  telefone            String
+  /// Só os 8 dígitos.
+  cep                 String   @db.Char(8)
+  numero              String
+  rua                 String
+  bairro              String
+  papel               Papel    @default(USER)
+  /// Quando a pessoa aceitou o uso dos dados (LGPD) — prova do consentimento, não só "sim".
+  consentimentoLgpdEm DateTime @db.Timestamptz(3)
+  createdAt           DateTime @default(now()) @db.Timestamptz(3)
+
+  /// Última posição enviada por POST /api/me/location (contrato §9); aparece para a equipe
+  /// como `ultimaPosicao` (contrato §6). Nula enquanto a pessoa nunca compartilhou.
+  posicaoLat       Float?
+  posicaoLng       Float?
+  posicaoPrecisaoM Float?
+  posicaoEm        DateTime? @db.Timestamptz(3)
+
+  avistamentos     Sighting[]  @relation("AutorDoAvistamento")
+  exclusoes        Sighting[]  @relation("QuemExcluiu")
+  membroDe         TeamMember?
+  equipesLideradas Team[]
+  mensagens        Message[]
+
+  @@map("users")
+}
+
+model Sighting {
+  id            String      @id @default(cuid())
+  autorId       String
+  autor         User        @relation("AutorDoAvistamento", fields: [autorId], references: [id])
+  latitude      Float
+  longitude     Float
+  /// Escolhido pelo usuário na lista fixa do contrato (§4.1).
+  bairro        String
+  /// Opcional no contrato (0–500 caracteres): guardado como "" quando vazio, nunca nulo.
+  descricao     String      @default("") @db.VarChar(500)
+  origemLocal   OrigemLocal
+  /// Precisão do GPS em metros; nula quando o local foi marcado no mapa.
+  precisaoM     Float?
+  /// Hora do avistamento = hora do SERVIDOR no momento do registro (RN02). O cliente não envia.
+  vistoEm       DateTime    @default(now()) @db.Timestamptz(3)
+  /// Exclusão lógica (contrato §1.7): preenchido em vez de apagar a linha.
+  deletedAt     DateTime?   @db.Timestamptz(3)
+  /// Quem excluiu — só essa pessoa pode desfazer (contrato §4, POST /restore).
+  excluidoPorId String?
+  excluidoPor   User?       @relation("QuemExcluiu", fields: [excluidoPorId], references: [id])
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime    @updatedAt @db.Timestamptz(3)
+
+  // vistoEm: ordenação padrão, filtro de período e dashboard. deletedAt: toda consulta filtra
+  // "não excluídos". autorId: filtro "meus" e contagem da minha contribuição.
+  @@index([vistoEm])
+  @@index([deletedAt])
+  @@index([autorId])
+  @@map("sightings")
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  nome      String   @db.VarChar(40)
+  /// Código de convite: 6 caracteres sem 0/O/1/I (contrato §6).
+  codigo    String   @unique @db.Char(6)
+  liderId   String
+  lider     User     @relation(fields: [liderId], references: [id])
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  membros   TeamMember[]
+  mensagens Message[]
+
+  @@map("teams")
+}
+
+/// Participação numa equipe. `userId` é a CHAVE PRIMÁRIA: o próprio banco garante a regra
+/// "uma equipe por vez" (RN05) — uma pessoa não consegue ter duas linhas aqui.
+model TeamMember {
+  userId   String   @id
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  entrouEm DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([teamId])
+  @@map("team_members")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  autorId   String
+  autor     User     @relation(fields: [autorId], references: [id])
+  /// Texto puro, 1–500 caracteres (RN08).
+  texto     String   @db.VarChar(500)
+  /// Eco do id gerado no front para o envio otimista (contrato §7).
+  clientId  String?  @db.VarChar(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  // O chat busca "mensagens da equipe X depois do instante Y" a cada 3 s (?since=): este
+  // índice composto responde isso sem varrer a tabela.
+  @@index([teamId, createdAt])
+  @@map("messages")
+}
+
+model EmergencyPlace {
+  id        String         @id @default(cuid())
+  nome      String
+  tipo      TipoEmergencia
+  latitude  Float
+  longitude Float
+  endereco  String
+  /// Lista de { rotulo, numero } (contrato §8). JSON porque é sempre lida e escrita inteira.
+  telefones Json
+  horario   String
+
+  @@map("emergency_places")
+}
