@@ -259,3 +259,61 @@
 [data-area="app"] .leaflet-container .leaflet-bar a:hover {
   background: var(--surface-raised);
 }
+
+/* Pinos do mapa principal (Fase 3). Formas diferentes para cada camada — nunca só cor:
+   pegada = avistamento · círculo com ícone = emergência · círculo com iniciais = membro. */
+/* .leaflet-marker-icon junto: o leaflet.css (carregado depois) força display:block nos
+   marcadores com a mesma especificidade — sem isto o conteúdo sai do centro. */
+.leaflet-marker-icon.lv-pino-emergencia,
+.leaflet-marker-icon.lv-pino-membro,
+.leaflet-marker-icon.lv-grupo-avistamentos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px var(--surface-card), var(--shadow-2);
+}
+.lv-pino-emergencia {
+  background: var(--danger);
+}
+.lv-pino-emergencia span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background-color: var(--surface-card);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.lv-pino-membro {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--ink-1);
+}
+.lv-pastel-lavanda { background: var(--pastel-lavanda); }
+.lv-pastel-azul { background: var(--pastel-azul); }
+.lv-pastel-menta { background: var(--pastel-menta); }
+.lv-pastel-rosa { background: var(--pastel-rosa); }
+.lv-pastel-creme { background: var(--pastel-creme); }
+.leaflet-marker-icon.lv-grupo-avistamentos {
+  background: var(--primary);
+  color: var(--ink-on-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.lv-minha-posicao span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--info);
+  box-shadow: 0 0 0 4px var(--surface-card), 0 0 0 10px color-mix(in srgb, var(--info) 25%, transparent);
+}
+/* Marcadores focáveis pelo teclado: foco visível também dentro do mapa. */
+[data-area="app"] .leaflet-marker-icon:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}

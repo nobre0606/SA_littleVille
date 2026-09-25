@@ -330,6 +330,32 @@ A criação é otimista pela TELA: um cartão "Enviando…" via `useMutationStat
 no cache. Decidir em qual página e ordem o item novo entra seria recalcular no front o que o
 servidor decide.
 
+## D18. Mapa principal: desempenho e acessibilidade
+
+- **Áreas do RF04 em canvas** (`preferCanvas`): dezenas de círculos sem criar um elemento SVG
+  por círculo. Cada área é `memo`: o timer de 60 s re-renderiza a lista, mas um círculo só é
+  redesenhado quando muda de faixa de idade.
+- **Pegadas agrupadas** (leaflet.markercluster). Os marcadores ficam num `Map` por id, e a
+  atualização é incremental: só entram os novos e saem os removidos.
+- **Formas diferentes, não só cores:** pegada (avistamento), círculo com ícone do lucide
+  (emergência), círculo com iniciais (membro). A legenda do RF04 mostra cor, ícone, rótulo
+  e estilo de traço.
+- **Teclado:** cada marcador é focável e tem nome (`title`). A visão em **Lista** (os mesmos
+  avistamentos, por distância e hora) é o caminho acessível completo do mapa.
+- **Ordenação por distância no aparelho** (`domain/distancia.js`): não é filtro nem
+  estatística. A lista é exatamente a do servidor, só muda a ordem, porque só o aparelho sabe
+  onde a pessoa está.
+- **Posição a cada 30 s** só com o mapa aberto e a aba visível (`useCompartilharPosicao`).
+
+## D19. Dashboard
+
+- Todo número vem de `GET /api/dashboard/stats` (RN10). Criar, editar ou excluir invalida o
+  cache do dashboard, e os números se atualizam sozinhos (o e2e confere: 32 passa a 33).
+- Linha com interpolação **linear**: a curva suavizada desenhava "ondas" abaixo de zero nos
+  dias sem avistamento, o que é infiel ao dado.
+- Rótulo direto no topo/fim de cada barra (série única), tooltip em pt-BR e tabela equivalente
+  recolhível em todo gráfico.
+
 ---
 
 ## Bugs reais que os testes encontraram (Fase 0.5)

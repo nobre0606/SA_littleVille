@@ -19,6 +19,8 @@ const PermissaoLocalizacao = lazy(() => import('./pages/PermissaoLocalizacao.jsx
 const Perfil = lazy(() => import('./pages/Perfil.jsx'))
 const NaoEncontrado = lazy(() => import('./pages/NaoEncontrado.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+const Mapa = lazy(() => import('./pages/Mapa.jsx'))
+const Emergencia = lazy(() => import('./pages/Emergencia.jsx'))
 const ListaAvistamentos = lazy(() => import('./pages/avistamentos/Lista.jsx'))
 const DetalheAvistamento = lazy(() => import('./pages/avistamentos/Detalhe.jsx'))
 const FormularioAvistamento = lazy(() => import('./pages/avistamentos/Formulario.jsx'))
@@ -86,9 +88,9 @@ const roteador = createBrowserRouter(
             <Route path="/avistamentos/novo" element={<FormularioAvistamento />} />
             <Route path="/avistamentos/:id" element={<DetalheAvistamento />} />
             <Route path="/avistamentos/:id/editar" element={<FormularioAvistamento />} />
-            <Route path="/mapa" element={<EmConstrucao titulo="Mapa" descricao="Áreas de avistamento, equipe e locais de emergência." fase="Fase 3" />} />
+            <Route path="/mapa" element={<Mapa />} />
             <Route path="/equipe" element={<EmConstrucao titulo="Equipe" descricao="Sua equipe e o chat." fase="Fase 4" />} />
-            <Route path="/emergencia" element={<EmConstrucao titulo="Emergência" descricao="Hospitais, polícia, bombeiros e abrigos." fase="Fase 3" />} />
+            <Route path="/emergencia" element={<Emergencia />} />
             <Route path="/perfil" element={<Perfil />} />
             {UiKit && <Route path="/ui-kit" element={<UiKit />} />}
           </Route>

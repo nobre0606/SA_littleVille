@@ -9,6 +9,7 @@ import { ROTAS, TAMANHOS, abrir, test } from './apoio.js'
 
 const TODAS = [
   ...ROTAS.map((r) => r.caminho),
+  '/mapa?visao=lista',
   '/avistamentos/novo',
   '/avistamentos/s_001',
   '/avistamentos/s_001/editar',
@@ -32,8 +33,9 @@ for (const tamanho of [TAMANHOS[0], TAMANHOS[2]]) {
 }
 
 test('área de toque: todo botão e link interativo tem pelo menos 44x44 px (mobile)', async ({ page }) => {
+  test.setTimeout(90_000) // 8 telas em sequência
   await page.setViewportSize(TAMANHOS[0])
-  for (const caminho of ['/dashboard', '/perfil', '/avistamentos', '/avistamentos/novo', '/avistamentos/s_001', '/ui-kit']) {
+  for (const caminho of ['/dashboard', '/perfil', '/avistamentos', '/avistamentos/novo', '/avistamentos/s_001', '/mapa?visao=lista', '/emergencia', '/ui-kit']) {
     await abrir(page, caminho)
     await page.waitForTimeout(450) // fim da animação de entrada
     const pequenos = await page.evaluate(() =>

@@ -9,7 +9,7 @@ e as decisões em [DECISOES.md](DECISOES.md).
 - 🟡 parcial
 - ⏳ pendente, com a fase prevista entre parênteses
 
-**Última atualização:** Fase 1 (CRUD de avistamentos), 2026-09-25.
+**Última atualização:** Fases 2 e 3 (dashboard e mapa), 2026-09-25.
 
 **Onde estão os testes** (todos em `frontend/`, exceto `shared/`):
 
@@ -23,15 +23,15 @@ e as decisões em [DECISOES.md](DECISOES.md).
 
 | Req. | Tela / rota | Arquivos | Testes | Status |
 |------|-------------|----------|--------|--------|
-| RF01 Mapa | `/mapa` | rota e navegação prontas (`App.jsx`) | e2e navegação | ⏳ (Fase 3) |
-| RF02 Emergência | `/emergencia` | contrato `emergencyPlaceSchema`; mock `GET /emergency-places` | `contract.test.js`: "emergência e posição" | 🟡 contrato e mock prontos; tela ⏳ (Fase 3) |
+| RF01 Mapa | `/mapa` (mapa e `?visao=lista`) | `src/pages/Mapa.jsx`, `src/features/mapa/{Camadas,MapaBase,icones,leafletCluster}.js(x)`, `src/domain/distancia.js` | `distancia.test.js`; e2e `dashboard-mapa.spec.js`: "mapa: pegadas, áreas, emergência…; lista por distância" | ✅ |
+| RF02 Emergência | `/emergencia`, painel no mapa | `src/pages/Emergencia.jsx`, `src/features/mapa/PainelEmergencia.jsx` (tel:) | e2e: "emergência: locais agrupados…", painel com `tel:192` no teste do mapa | ✅ |
 | RF03 Equipes | `/equipe` | mock: criar, entrar, sair, membros e liderança; `TeamCodeBox` | `contract.test.js`: "equipes…", "líder sai…" | 🟡 contrato e mock prontos; tela ⏳ (Fase 4) |
-| RF04 Área 1 km | `/mapa` | `src/domain/idadeArea.js` (`corDaArea`), `BadgeIdade` | `lib.test.js`: "corDaArea…" (2 testes) | 🟡 regra pronta e testada; mapa ⏳ (Fase 3) |
+| RF04 Área 1 km | `/mapa`, detalhe | `corDaArea` + `CamadaAreas` (canvas, `memo` por faixa, timer de 60 s com hora do servidor) + legenda com traço | `lib.test.js`; e2e do mapa (legenda) | ✅ |
 | RF05 Chat | `/equipe` | mock: `since`, `clientId`, 1 envio/s | `contract.test.js`: "chat…" | 🟡 contrato e mock prontos; tela ⏳ (Fase 4) |
 | RF06 Login/cadastro | `/`, `/login` | `src/auth/*` (**congelado**); `api/errors.js` converte o erro antigo | `caminho-feliz.spec.js`: "login pela intro → … → dashboard"; `errors.test.js`; `shared/*.test.js` | ✅ |
 | RF07 CRUD avistamentos | `/avistamentos`, `/avistamentos/novo`, `/avistamentos/:id`, `/avistamentos/:id/editar` | `src/pages/avistamentos/{Lista,Detalhe,Formulario}.jsx`, `src/features/avistamentos/*` (filtros na URL, cache otimista, regras do formulário), `src/features/mapa/*` | `filtros.test.js`, `avistamentos.test.js`, `contract.test.js`; e2e `crud.spec.js` (13 testes: as 4 operações em < 1 min, bloqueio sem local, teclado, GPS negado, alterações não salvas, permissões, Admin, reversão otimista, filtros, vazio, mobile, não encontrado) | ✅ |
-| RF08 Dashboard | `/dashboard` | mock `GET /dashboard/stats`; `StatCard`, `ChartCard` | `contract.test.js`: "stats reage ao CRUD", "cenário vazio" | 🟡 contrato, mock e componentes prontos; tela ⏳ (Fase 2) |
-| RF09 Posição GPS | `/permissao-localizacao` | `src/pages/PermissaoLocalizacao.jsx`; mock `POST /me/location` | `caminho-feliz.spec.js` (fluxo "Agora não"); `contract.test.js` | 🟡 permissão pronta; envio a cada 30 s ⏳ (Fase 3) |
+| RF08 Dashboard | `/dashboard` | `src/pages/Dashboard.jsx`, `src/features/dashboard/*` (Recharts; números só do servidor) | e2e: "dashboard: 4 indicadores…", "dashboard reage ao CRUD" | ✅ |
+| RF09 Posição GPS | `/permissao-localizacao`, `/mapa` | `PermissaoLocalizacao.jsx`, `features/mapa/useCompartilharPosicao.js` (30 s, pausa com a aba oculta) | `contract.test.js`; e2e do mapa (lista por distância usa a posição) | ✅ |
 | RF10 Perfil | `/perfil` | `src/pages/Perfil.jsx`, `app/sessao.js` | `caminho-feliz.spec.js`: "sair: confirmação…" | ✅ |
 
 ## Requisitos não funcionais

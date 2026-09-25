@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
               { name: 'zod', test: /node_modules[\\/]zod[\\/]/ },
               { name: 'query', test: /node_modules[\\/]@tanstack[\\/]/ },
               { name: 'recharts', test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor)[\\/]/ },
-              { name: 'leaflet', test: /node_modules[\\/](leaflet|react-leaflet|@react-leaflet)[\\/]/ },
+              { name: 'leaflet', test: /node_modules[\\/](leaflet|leaflet\.markercluster|react-leaflet|@react-leaflet)[\\/]/ },
             ],
           },
         },
