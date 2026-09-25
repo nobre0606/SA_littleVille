@@ -7,6 +7,8 @@ const VARIANTES = {
   secundario: 'border border-primary bg-surface-card text-primary hover:bg-primary-soft',
   fantasma: 'bg-transparent text-primary hover:bg-primary-soft',
   perigo: 'bg-danger text-ink-on-primary hover:brightness-90',
+  // Ação destrutiva discreta (ex.: ícone de excluir numa linha da tabela). Texto em danger-text.
+  perigoDiscreto: 'bg-transparent text-danger-text hover:bg-pastel-rosa',
 }
 
 /**

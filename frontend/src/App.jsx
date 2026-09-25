@@ -1,5 +1,5 @@
 import { lazy, Suspense, useLayoutEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { Outlet, Route, RouterProvider, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout.jsx'
 import { AppShell } from './app/AppShell.jsx'
 import { Providers } from './app/Providers.jsx'
@@ -18,6 +18,9 @@ const SceneScreen = lazy(() => import('./pages/SceneScreen.jsx'))
 const PermissaoLocalizacao = lazy(() => import('./pages/PermissaoLocalizacao.jsx'))
 const Perfil = lazy(() => import('./pages/Perfil.jsx'))
 const NaoEncontrado = lazy(() => import('./pages/NaoEncontrado.jsx'))
+const ListaAvistamentos = lazy(() => import('./pages/avistamentos/Lista.jsx'))
+const DetalheAvistamento = lazy(() => import('./pages/avistamentos/Detalhe.jsx'))
+const FormularioAvistamento = lazy(() => import('./pages/avistamentos/Formulario.jsx'))
 // Só em desenvolvimento: em produção `import.meta.env.DEV` é false e o Vite remove o import.
 const UiKit = import.meta.env.DEV ? lazy(() => import('./pages/UiKit.jsx')) : null
 
@@ -43,6 +46,18 @@ const carregandoTela = (
   </div>
 )
 
+/** Raiz de todas as rotas: rastreador + Suspense das telas carregadas sob demanda. */
+function Raiz() {
+  return (
+    <>
+      <RastreadorDeRota />
+      <Suspense fallback={carregandoTela}>
+        <Outlet />
+      </Suspense>
+    </>
+  )
+}
+
 // A cena carrega sob demanda com um fundo na cor da caverna: a intro nunca "pisca" claro.
 const cena = (
   <Suspense fallback={<div className="h-dvh" style={{ background: 'var(--lv-bg)' }} />}>
@@ -50,35 +65,43 @@ const cena = (
   </Suspense>
 )
 
+/*
+ * Roteador "de dados" (createBrowserRouter) em vez de <BrowserRouter>: é o que habilita o
+ * `useBlocker` — o aviso de "alterações não salvas" do formulário de avistamento (Fase 1).
+ */
+const roteador = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<Raiz />}>
+      {/* Intro + login/cadastro (congelados). "/login" é o destino do 401 e do "Sair". */}
+      <Route path="/" element={cena} />
+      <Route path="/login" element={cena} />
+
+      <Route element={<AppLayout />}>
+        <Route element={<RequireSession />}>
+          <Route path="/permissao-localizacao" element={<PermissaoLocalizacao />} />
+          <Route element={<AppShell />}>
+            <Route path="/dashboard" element={<EmConstrucao titulo="Dashboard" descricao="Métricas e gráficos dos avistamentos." fase="Fase 2" />} />
+            <Route path="/avistamentos" element={<ListaAvistamentos />} />
+            <Route path="/avistamentos/novo" element={<FormularioAvistamento />} />
+            <Route path="/avistamentos/:id" element={<DetalheAvistamento />} />
+            <Route path="/avistamentos/:id/editar" element={<FormularioAvistamento />} />
+            <Route path="/mapa" element={<EmConstrucao titulo="Mapa" descricao="Áreas de avistamento, equipe e locais de emergência." fase="Fase 3" />} />
+            <Route path="/equipe" element={<EmConstrucao titulo="Equipe" descricao="Sua equipe e o chat." fase="Fase 4" />} />
+            <Route path="/emergencia" element={<EmConstrucao titulo="Emergência" descricao="Hospitais, polícia, bombeiros e abrigos." fase="Fase 3" />} />
+            <Route path="/perfil" element={<Perfil />} />
+            {UiKit && <Route path="/ui-kit" element={<UiKit />} />}
+          </Route>
+        </Route>
+        <Route path="*" element={<NaoEncontrado />} />
+      </Route>
+    </Route>,
+  ),
+)
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <Providers>
-        <RastreadorDeRota />
-        <Suspense fallback={carregandoTela}>
-          <Routes>
-            {/* Intro + login/cadastro (congelados). "/login" é o destino do 401 e do "Sair". */}
-            <Route path="/" element={cena} />
-            <Route path="/login" element={cena} />
-
-            <Route element={<AppLayout />}>
-              <Route element={<RequireSession />}>
-                <Route path="/permissao-localizacao" element={<PermissaoLocalizacao />} />
-                <Route element={<AppShell />}>
-                  <Route path="/dashboard" element={<EmConstrucao titulo="Dashboard" descricao="Métricas e gráficos dos avistamentos." fase="Fase 2" />} />
-                  <Route path="/avistamentos/*" element={<EmConstrucao titulo="Avistamentos" descricao="Registre, consulte e gerencie avistamentos." fase="Fase 1" />} />
-                  <Route path="/mapa" element={<EmConstrucao titulo="Mapa" descricao="Áreas de avistamento, equipe e locais de emergência." fase="Fase 3" />} />
-                  <Route path="/equipe" element={<EmConstrucao titulo="Equipe" descricao="Sua equipe e o chat." fase="Fase 4" />} />
-                  <Route path="/emergencia" element={<EmConstrucao titulo="Emergência" descricao="Hospitais, polícia, bombeiros e abrigos." fase="Fase 3" />} />
-                  <Route path="/perfil" element={<Perfil />} />
-                  {UiKit && <Route path="/ui-kit" element={<UiKit />} />}
-                </Route>
-              </Route>
-              <Route path="*" element={<NaoEncontrado />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </Providers>
-    </BrowserRouter>
+    <Providers>
+      <RouterProvider router={roteador} />
+    </Providers>
   )
 }

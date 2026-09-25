@@ -203,3 +203,59 @@
 .lv-bob {
   animation: lv-bob 1.6s var(--ease-inout) infinite;
 }
+
+/* ------------------------------------------------------------------------------ mapas */
+
+/* Marcador de pegada (divIcon do Leaflet). A classe substitui a caixa branca padrão do
+   divIcon; o contorno claro (drop-shadow no PAI, porque a máscara cortaria o do filho) destaca
+   a pegada sobre qualquer trecho do mapa. */
+.lv-marcador {
+  filter: drop-shadow(0 0 1px var(--surface-card)) drop-shadow(0 0 1px var(--surface-card)) drop-shadow(0 2px 2px var(--ink-3));
+}
+.lv-marcador span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Textos do Leaflet (atribuição, zoom) na fonte e nas cores do app. */
+[data-area="app"] .leaflet-container {
+  font-family: var(--font-ui);
+  background: var(--surface-sunken);
+}
+[data-area="app"] .leaflet-control-attribution {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+}
+[data-area="app"] .leaflet-control-attribution a {
+  color: var(--primary);
+}
+
+/* OSM padrão é colorido; este filtro o deixa claro e neutro (perto do CARTO Positron), para
+   os dados do app — pegadas e áreas do RF04 — serem o que se destaca. Só nos TILES: marcadores
+   e círculos ficam em outros painéis do Leaflet e mantêm as cores. Ver DECISOES D16. */
+.lv-tiles-neutros .leaflet-tile-pane {
+  filter: grayscale(0.9) brightness(1.08) contrast(0.85);
+}
+
+/* Botões de zoom do Leaflet com área de toque de 44 px (o padrão dele é 30 px). */
+/* .leaflet-container a mais: o leaflet.css carrega DEPOIS (com o pedaço do mapa) e tem a mesma
+   especificidade (.leaflet-touch .leaflet-bar a) — sem isto, o dele venceria. */
+[data-area="app"] .leaflet-container .leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 1.25rem;
+  color: var(--ink-1);
+  background: var(--surface-card);
+}
+[data-area="app"] .leaflet-container .leaflet-bar a:hover {
+  background: var(--surface-raised);
+}
