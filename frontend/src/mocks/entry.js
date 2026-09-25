@@ -24,6 +24,10 @@ const worker = setupWorker(...criarHandlers({ banco, cenarios }))
 // Esperar o worker ligar ANTES do app: senão as primeiras chamadas escapariam para a rede.
 await worker.start({ onUnhandledRequest: 'bypass', quiet: true })
 
+// Atalho de apresentação na tela de login ("Ver o app sem login"). Só em modo mock.
+const { montarBotaoDemonstracao } = await import('./montarBotaoDemonstracao.js')
+montarBotaoDemonstracao()
+
 if (new URLSearchParams(window.location.search).get('debug') === '1') {
   const { montarPainelDebug } = await import('./montarPainel.js')
   montarPainelDebug({ banco, cenarios })
