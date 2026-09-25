@@ -18,6 +18,7 @@ const SceneScreen = lazy(() => import('./pages/SceneScreen.jsx'))
 const PermissaoLocalizacao = lazy(() => import('./pages/PermissaoLocalizacao.jsx'))
 const Perfil = lazy(() => import('./pages/Perfil.jsx'))
 const NaoEncontrado = lazy(() => import('./pages/NaoEncontrado.jsx'))
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const ListaAvistamentos = lazy(() => import('./pages/avistamentos/Lista.jsx'))
 const DetalheAvistamento = lazy(() => import('./pages/avistamentos/Detalhe.jsx'))
 const FormularioAvistamento = lazy(() => import('./pages/avistamentos/Formulario.jsx'))
@@ -80,7 +81,7 @@ const roteador = createBrowserRouter(
         <Route element={<RequireSession />}>
           <Route path="/permissao-localizacao" element={<PermissaoLocalizacao />} />
           <Route element={<AppShell />}>
-            <Route path="/dashboard" element={<EmConstrucao titulo="Dashboard" descricao="Métricas e gráficos dos avistamentos." fase="Fase 2" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/avistamentos" element={<ListaAvistamentos />} />
             <Route path="/avistamentos/novo" element={<FormularioAvistamento />} />
             <Route path="/avistamentos/:id" element={<DetalheAvistamento />} />
